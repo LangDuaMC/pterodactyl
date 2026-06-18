@@ -34,6 +34,7 @@
 
         @yield('assets')
 
+        @vite('resources/scripts/index.tsx')
         @include('layouts.scripts')
     </head>
     <body class="{{ $css['body'] ?? 'bg-neutral-50' }}">
@@ -43,7 +44,6 @@
             @yield('below-container')
         @show
         @section('scripts')
-            {!! $asset->js('main.js') !!}
         @show
     </body>
 </html>

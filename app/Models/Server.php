@@ -20,6 +20,7 @@ use Pterodactyl\Exceptions\Http\Server\ServerStateConflictException;
  *
  * @property int $id
  * @property string|null $external_id
+ * @property int|null $tenant_id
  * @property string $uuid
  * @property string $uuidShort
  * @property int $node_id
@@ -152,6 +153,7 @@ class Server extends Model implements Identifiable
 
     public static array $validationRules = [
         'external_id' => 'sometimes|nullable|string|between:1,191|unique:servers',
+        'tenant_id' => 'sometimes|nullable|integer|exists:tenants,id',
         'owner_id' => 'required|integer|exists:users,id',
         'name' => 'required|string|min:1|max:191',
         'node_id' => 'required|exists:nodes,id',
@@ -180,6 +182,7 @@ class Server extends Model implements Identifiable
      */
     protected $casts = [
         'node_id' => 'integer',
+        'tenant_id' => 'integer',
         'skip_scripts' => 'boolean',
         'owner_id' => 'integer',
         'memory' => 'integer',
@@ -228,6 +231,16 @@ class Server extends Model implements Identifiable
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * Gets the tenant that owns this server's shared resource budget.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\Pterodactyl\Models\Tenant, $this>
+     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
     }
 
     /**

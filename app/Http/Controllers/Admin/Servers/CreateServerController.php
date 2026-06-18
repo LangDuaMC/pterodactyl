@@ -5,6 +5,7 @@ namespace Pterodactyl\Http\Controllers\Admin\Servers;
 use Illuminate\View\View;
 use Pterodactyl\Models\Nest;
 use Pterodactyl\Models\Node;
+use Pterodactyl\Models\Tenant;
 use Pterodactyl\Models\Location;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
@@ -55,6 +56,7 @@ class CreateServerController extends Controller
         return view('admin.servers.new', [
             'locations' => Location::all(),
             'nests' => $nests,
+            'tenants' => Tenant::query()->orderBy('name')->get(),
         ]);
     }
 

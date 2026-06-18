@@ -53,6 +53,7 @@ class ServerTransformer extends BaseTransformer
         return [
             'id' => $server->getKey(),
             'external_id' => $server->external_id,
+            'tenant' => $server->tenant_id,
             'uuid' => $server->uuid,
             'identifier' => $server->uuidShort,
             'name' => $server->name,

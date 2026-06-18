@@ -5,6 +5,7 @@ namespace Pterodactyl\Http\Controllers\Admin\Servers;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Pterodactyl\Models\Nest;
+use Pterodactyl\Models\Tenant;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Exceptions\DisplayException;
 use Pterodactyl\Http\Controllers\Controller;
@@ -46,7 +47,10 @@ class ServerViewController extends Controller
      */
     public function details(Request $request, Server $server): View
     {
-        return view('admin.servers.view.details', compact('server'));
+        return view('admin.servers.view.details', [
+            'server' => $server,
+            'tenants' => Tenant::query()->orderBy('name')->get(),
+        ]);
     }
 
     /**

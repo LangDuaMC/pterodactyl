@@ -6,6 +6,7 @@ use Illuminate\Support\Arr;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Jobs\RevokeSftpAccessJob;
 use Illuminate\Database\ConnectionInterface;
+use Pterodactyl\Services\Tenants\TenantQuotaService;
 use Pterodactyl\Traits\Services\ReturnsUpdatedModels;
 use Pterodactyl\Repositories\Wings\DaemonServerRepository;
 use Pterodactyl\Repositories\Wings\DaemonRevocationRepository;
@@ -21,6 +22,7 @@ class DetailsModificationService
         private ConnectionInterface $connection,
         private DaemonServerRepository $serverRepository,
         private DaemonRevocationRepository $revocationRepository,
+        private TenantQuotaService $tenantQuotaService,
     ) {
     }
 
@@ -33,9 +35,15 @@ class DetailsModificationService
     {
         return $this->connection->transaction(function () use ($data, $server) {
             $original = $server->user;
+            $tenantId = Arr::get($data, 'tenant_id', $server->tenant_id);
+
+            $this->tenantQuotaService->assertWithinQuota($tenantId, array_merge($server->toArray(), [
+                'tenant_id' => $tenantId,
+            ]), $server);
 
             $server->forceFill([
                 'external_id' => Arr::get($data, 'external_id'),
+                'tenant_id' => $tenantId,
                 'owner_id' => Arr::get($data, 'owner_id'),
                 'name' => Arr::get($data, 'name'),
                 'description' => Arr::get($data, 'description') ?? '',

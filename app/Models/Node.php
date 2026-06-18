@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property string $daemon_token
  * @property int $daemonListen
  * @property int $daemonSFTP
+ * @property string|null $daemon_sftp_alias
  * @property string $daemonBase
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
@@ -91,7 +92,7 @@ class Node extends Model implements Identifiable
         'description', 'fqdn', 'scheme', 'behind_proxy',
         'memory', 'memory_overallocate', 'disk',
         'disk_overallocate', 'upload_size', 'daemonBase',
-        'daemonSFTP', 'daemonListen',
+        'daemonSFTP', 'daemon_sftp_alias', 'daemonListen',
         'description', 'maintenance_mode',
     ];
 
@@ -109,6 +110,7 @@ class Node extends Model implements Identifiable
         'disk_overallocate' => 'required|numeric|min:-1',
         'daemonBase' => 'sometimes|required|regex:/^([\/][\d\w.\-\/]+)$/',
         'daemonSFTP' => 'required|numeric|between:1,65535',
+        'daemon_sftp_alias' => 'nullable|string|max:191',
         'daemonListen' => 'required|numeric|between:1,65535',
         'maintenance_mode' => 'boolean',
         'upload_size' => 'int|min:1',
@@ -124,9 +126,15 @@ class Node extends Model implements Identifiable
         'disk_overallocate' => 0,
         'daemonBase' => '/var/lib/pterodactyl/volumes',
         'daemonSFTP' => 2022,
+        'daemon_sftp_alias' => null,
         'daemonListen' => 8080,
         'maintenance_mode' => false,
     ];
+
+    public function setDaemonSftpAliasAttribute(?string $value): void
+    {
+        $this->attributes['daemon_sftp_alias'] = filled($value) ? $value : null;
+    }
 
     /**
      * Get the connection address to use when making calls to this node.

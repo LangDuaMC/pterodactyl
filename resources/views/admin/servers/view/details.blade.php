@@ -42,6 +42,16 @@
                         <p class="text-muted small">You can change the owner of this server by changing this field to an email matching another use on this system. If you do this a new daemon security token will be generated automatically.</p>
                     </div>
                     <div class="form-group">
+                        <label for="tenant_id" class="control-label">Tenant</label>
+                        <select name="tenant_id" class="form-control">
+                            <option value="">None</option>
+                            @foreach($tenants as $tenant)
+                                <option value="{{ $tenant->id }}" {{ old('tenant_id', $server->tenant_id) == $tenant->id ? 'selected' : '' }}>{{ $tenant->name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="text-muted small">Optional tenant resource pool for this server. Quotas are enforced when set.</p>
+                    </div>
+                    <div class="form-group">
                         <label for="description" class="control-label">Server Description</label>
                         <textarea name="description" rows="3" class="form-control">{{ old('description', $server->description) }}</textarea>
                         <p class="text-muted small">A brief description of this server.</p>

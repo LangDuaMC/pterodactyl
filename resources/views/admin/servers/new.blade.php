@@ -35,6 +35,17 @@
                             <select id="pUserId" name="owner_id" class="form-control" style="padding-left:0;"></select>
                             <p class="small text-muted no-margin">Email address of the Server Owner.</p>
                         </div>
+
+                        <div class="form-group">
+                            <label for="pTenantId">Tenant</label>
+                            <select id="pTenantId" name="tenant_id" class="form-control">
+                                <option value="">None</option>
+                                @foreach($tenants as $tenant)
+                                    <option value="{{ $tenant->id }}" {{ old('tenant_id') == $tenant->id ? 'selected' : '' }}>{{ $tenant->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="small text-muted no-margin">Optional tenant resource pool for this server.</p>
+                        </div>
                     </div>
 
                     <div class="col-md-6">

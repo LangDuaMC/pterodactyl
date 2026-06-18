@@ -195,6 +195,13 @@
                                     <input type="text" name="daemonSFTP" class="form-control" value="{{ old('daemonSFTP', $node->daemonSFTP) }}"/>
                                 </div>
                             </div>
+                            <div class="form-group col-md-12">
+                                <label for="daemon_sftp_alias" class="control-label">SFTP Display Address</label>
+                                <div>
+                                    <input type="text" name="daemon_sftp_alias" class="form-control" value="{{ old('daemon_sftp_alias', $node->daemon_sftp_alias) }}"/>
+                                </div>
+                                <p class="text-muted"><small>Optional hostname shown to users for SFTP connections. Leave empty to use the node FQDN.</small></p>
+                            </div>
                         </div>
                         <div class="row">
                             <div class="col-md-12">

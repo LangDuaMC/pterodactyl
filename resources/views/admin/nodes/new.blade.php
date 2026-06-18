@@ -152,6 +152,11 @@
                             <label for="pDaemonSFTP" class="form-label">Daemon SFTP Port</label>
                             <input type="text" name="daemonSFTP" class="form-control" id="pDaemonSFTP" value="2022" />
                         </div>
+                        <div class="form-group col-md-12">
+                            <label for="pDaemonSFTPAlias" class="form-label">SFTP Display Address</label>
+                            <input type="text" name="daemon_sftp_alias" class="form-control" id="pDaemonSFTPAlias" value="{{ old('daemon_sftp_alias') }}" />
+                            <p class="text-muted small">Optional hostname shown to users for SFTP connections. Leave empty to use the node FQDN.</p>
+                        </div>
                         <div class="col-md-12">
                             <p class="text-muted small">The daemon runs its own SFTP management container and does not use the SSHd process on the main physical server. <Strong>Do not use the same port that you have assigned for your physical server's SSH process.</strong> If you will be running the daemon behind CloudFlare&reg; you should set the daemon port to <code>8443</code> to allow websocket proxying over SSL.</p>
                         </div>

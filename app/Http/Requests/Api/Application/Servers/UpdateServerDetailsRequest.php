@@ -15,6 +15,7 @@ class UpdateServerDetailsRequest extends ServerWriteRequest
 
         return [
             'external_id' => $rules['external_id'],
+            'tenant' => $rules['tenant_id'],
             'name' => $rules['name'],
             'user' => $rules['owner_id'],
             'description' => array_merge(['nullable'], $rules['description']),
@@ -29,6 +30,7 @@ class UpdateServerDetailsRequest extends ServerWriteRequest
     {
         return [
             'external_id' => $this->input('external_id'),
+            'tenant_id' => $this->input('tenant'),
             'name' => $this->input('name'),
             'owner_id' => $this->input('user'),
             'description' => $this->input('description'),
@@ -43,6 +45,7 @@ class UpdateServerDetailsRequest extends ServerWriteRequest
     {
         return [
             'user' => 'User ID',
+            'tenant' => 'Tenant ID',
             'name' => 'Server Name',
         ];
     }

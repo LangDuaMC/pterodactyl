@@ -1,5 +1,5 @@
 # Pterodactyl Panel - Docker Image
-This is a ready to use docker image for the panel.
+This is a ready to use Docker image for the panel. The image runs FrankenPHP/Caddy for HTTP, plus supervised queue and scheduler workers.
 
 ## Requirements
 This docker image requires some additional software to function. The software can either be provided in other containers (see the [docker-compose.yml](https://github.com/pterodactyl/panel/blob/develop/docker-compose.example.yml) as an example) or as existing instances.
@@ -27,21 +27,22 @@ docker-compose exec panel php artisan p:user:make
 ## Environment Variables
 There are multiple environment variables to configure the panel when not providing your own `.env` file, see the following table for details on each available option.
 
-Note: If your `APP_URL` starts with `https://` you need to provide an `LE_EMAIL` as well so Certificates can be generated.
+Caddy data is stored in `/data` and `/config`; persist those paths if you enable automatic HTTPS in a custom Caddyfile.
 
 | Variable            | Description                                                                    | Required |
 | ------------------- | ------------------------------------------------------------------------------ | -------- |
 | `APP_URL`           | The URL the panel will be reachable with (including protocol)                  | yes      |
 | `APP_TIMEZONE`      | The timezone to use for the panel                                              | yes      |
-| `LE_EMAIL`          | The email used for letsencrypt certificate generation                          | yes      |
 | `DB_HOST`           | The host of the mysql instance                                                 | yes      |
 | `DB_PORT`           | The port of the mysql instance                                                 | yes      |
 | `DB_DATABASE`       | The name of the mysql database                                                 | yes      |
 | `DB_USERNAME`       | The mysql user                                                                 | yes      |
 | `DB_PASSWORD`       | The mysql password for the specified user                                      | yes      |
-| `CACHE_DRIVER`      | The cache driver        (see [Cache drivers](#cache-drivers) for detais)       | yes      |
+| `CACHE_STORE`       | The cache store        (see [Cache drivers](#cache-drivers) for details)       | yes      |
+| `CACHE_DRIVER`      | Legacy cache driver compatibility value                                        | maybe    |
 | `SESSION_DRIVER`    |                                                                                | yes      |
-| `QUEUE_DRIVER`      |                                                                                | yes      |
+| `QUEUE_CONNECTION`  |                                                                                | yes      |
+| `QUEUE_DRIVER`      | Legacy queue driver compatibility value                                        | maybe    |
 | `REDIS_HOST`        | The hostname or IP address of the redis database                               | yes      |
 | `REDIS_PASSWORD`    | The password used to secure the redis database                                 | maybe    |
 | `REDIS_PORT`        | The port the redis database is using on the host                               | maybe    |

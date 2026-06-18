@@ -38,6 +38,7 @@ class NodeFactory extends Factory
             'daemon_token' => Crypt::encrypt(Str::random(Node::DAEMON_TOKEN_LENGTH)),
             'daemonListen' => 8080,
             'daemonSFTP' => 2022,
+            'daemon_sftp_alias' => null,
             'daemonBase' => '/var/lib/pterodactyl/volumes',
         ];
     }

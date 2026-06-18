@@ -10,6 +10,7 @@ use Webmozart\Assert\Assert;
 use Pterodactyl\Models\Server;
 use Illuminate\Support\Collection;
 use Pterodactyl\Models\Allocation;
+use Pterodactyl\Services\Tenants\TenantQuotaService;
 use Illuminate\Database\ConnectionInterface;
 use Pterodactyl\Models\Objects\DeploymentObject;
 use Pterodactyl\Repositories\Eloquent\ServerRepository;
@@ -32,6 +33,7 @@ class ServerCreationService
         private ServerRepository $repository,
         private ServerDeletionService $serverDeletionService,
         private ServerVariableRepository $serverVariableRepository,
+        private TenantQuotaService $tenantQuotaService,
         private VariableValidatorService $validatorService,
     ) {
     }
@@ -84,6 +86,8 @@ class ServerCreationService
         // deleting the server itself from the system.
         /** @var Server $server */
         $server = $this->connection->transaction(function () use ($data, $eggVariableData) {
+            $this->tenantQuotaService->assertWithinQuota(Arr::get($data, 'tenant_id'), $data);
+
             // Create the server and assign any additional allocations to it.
             $server = $this->createModel($data);
 
@@ -139,6 +143,7 @@ class ServerCreationService
         /** @var Server $model */
         $model = $this->repository->create([
             'external_id' => Arr::get($data, 'external_id'),
+            'tenant_id' => Arr::get($data, 'tenant_id'),
             'uuid' => $uuid,
             'uuidShort' => substr($uuid, 0, 8),
             'node_id' => Arr::get($data, 'node_id'),

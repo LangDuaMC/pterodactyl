@@ -38,6 +38,7 @@ class ServerTransformer extends BaseClientTransformer
 
         return [
             'server_owner' => $user->id === $server->owner_id,
+            'tenant' => $server->tenant_id,
             'identifier' => config('pterodactyl.features.new_server_identifiers')
                 ? $server->identifier
                 : $server->uuidShort,
@@ -52,7 +53,7 @@ class ServerTransformer extends BaseClientTransformer
             'node' => $server->node->name,
             'is_node_under_maintenance' => $server->node->isUnderMaintenance(),
             'sftp_details' => [
-                'ip' => $server->node->fqdn,
+                'ip' => $server->node->daemon_sftp_alias ?: $server->node->fqdn,
                 'port' => $server->node->daemonSFTP,
             ],
             'description' => $server->description,

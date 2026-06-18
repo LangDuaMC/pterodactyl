@@ -3,10 +3,8 @@ import { initReactI18next } from 'react-i18next';
 import I18NextHttpBackend, { HttpBackendOptions } from 'i18next-http-backend';
 import I18NextMultiloadBackendAdapter from 'i18next-multiload-backend-adapter';
 
-// If we're using HMR use a unique hash per page reload so that we're always
-// doing cache busting. Otherwise just use the builder provided hash value in
-// the URL to allow cache busting to occur whenever the front-end is rebuilt.
-const hash = module.hot ? Date.now().toString(16) : process.env.WEBPACK_BUILD_HASH;
+// If we're using HMR use a unique hash per page reload so that we're always doing cache busting.
+const hash = import.meta.hot ? Date.now().toString(16) : process.env.VITE_BUILD_HASH;
 
 i18n.use(I18NextMultiloadBackendAdapter)
     .use(initReactI18next)

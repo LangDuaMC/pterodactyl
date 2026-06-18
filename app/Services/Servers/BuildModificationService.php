@@ -8,6 +8,7 @@ use Pterodactyl\Models\Allocation;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\ConnectionInterface;
 use Pterodactyl\Exceptions\DisplayException;
+use Pterodactyl\Services\Tenants\TenantQuotaService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Pterodactyl\Repositories\Wings\DaemonServerRepository;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
@@ -21,6 +22,7 @@ class BuildModificationService
         private ConnectionInterface $connection,
         private DaemonServerRepository $daemonServerRepository,
         private ServerConfigurationStructureService $structureService,
+        private TenantQuotaService $tenantQuotaService,
     ) {
     }
 
@@ -47,6 +49,12 @@ class BuildModificationService
             // If any of these values are passed through in the data array go ahead and set
             // them correctly on the server model.
             $merge = Arr::only($data, ['oom_disabled', 'memory', 'swap', 'io', 'cpu', 'threads', 'disk', 'allocation_id']);
+
+            $this->tenantQuotaService->assertWithinQuota($server->tenant_id, array_merge($server->toArray(), $merge, [
+                'database_limit' => Arr::get($data, 'database_limit', $server->database_limit),
+                'allocation_limit' => Arr::get($data, 'allocation_limit', $server->allocation_limit),
+                'backup_limit' => Arr::get($data, 'backup_limit', $server->backup_limit),
+            ]), $server);
 
             $server->forceFill(array_merge($merge, [
                 'database_limit' => Arr::get($data, 'database_limit', 0) ?? null,
