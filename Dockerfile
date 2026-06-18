@@ -10,16 +10,23 @@ RUN bun run build:production
 FROM --platform=$TARGETOS/$TARGETARCH dunglas/frankenphp:1-php8.3-alpine
 WORKDIR /app
 
+# System deps + PHP extensions (cached until these lines change).
+RUN apk add --no-cache bash ca-certificates curl git mariadb-client netcat-openbsd supervisor tar unzip \
+    && install-php-extensions bcmath gd pcntl pdo_mysql zip
+
+# Composer deps (cached unless composer.json or lock changes).
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# App source + built assets.
 COPY . ./
 COPY --from=assets /app/public/build ./public/build
 
-RUN apk add --no-cache bash ca-certificates curl git mariadb-client netcat-openbsd supervisor tar unzip \
-    && install-php-extensions bcmath gd pcntl pdo_mysql zip \
-    && cp .env.example .env \
+# Runtime setup (dirs, permissions, env).
+RUN cp .env.example .env \
     && mkdir -p /app/var bootstrap/cache storage/logs storage/framework/sessions storage/framework/views storage/framework/cache /var/log/supervisord \
     && chmod 777 -R bootstrap storage /app/var \
-    && composer install --no-dev --optimize-autoloader --no-interaction \
     && rm -rf .env bootstrap/cache/*.php \
     && chown -R www-data:www-data /app
 
