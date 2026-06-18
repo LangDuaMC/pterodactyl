@@ -61,6 +61,9 @@ export interface Server {
     isTransferring: boolean;
     variables: ServerEggVariable[];
     allocations: Allocation[];
+    BlueprintFramework?: {
+        eggId: number;
+    };
 }
 
 export const rawDataToServerObject = ({ attributes: data }: FractalResponseData): Server => ({

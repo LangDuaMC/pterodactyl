@@ -4,6 +4,10 @@ import { CSSTransition } from 'react-transition-group';
 import tw from 'twin.macro';
 import FlashMessageRender from '@/components/FlashMessageRender';
 
+import Attribution from '@blueprint/extends/Attribution';
+import BeforeSection from '@blueprint/components/Dashboard/Global/BeforeSection';
+import AfterSection from '@blueprint/components/Dashboard/Global/AfterSection';
+
 export interface PageContentBlockProps {
     title?: string;
     className?: string;
@@ -20,10 +24,12 @@ const PageContentBlock: React.FC<PageContentBlockProps> = ({ title, showFlashKey
     return (
         <CSSTransition timeout={150} classNames={'fade'} appear in>
             <>
+                <BeforeSection />
                 <ContentContainer css={tw`my-4 sm:my-10`} className={className}>
                     {showFlashKey && <FlashMessageRender byKey={showFlashKey} css={tw`mb-4`} />}
                     {children}
                 </ContentContainer>
+                <AfterSection />
                 <ContentContainer css={tw`mb-4`}>
                     <p css={tw`text-center text-neutral-500 text-xs`}>
                         <a
@@ -35,6 +41,7 @@ const PageContentBlock: React.FC<PageContentBlockProps> = ({ title, showFlashKey
                             Pterodactyl&reg;
                         </a>
                         &nbsp;&copy; 2015 - {new Date().getFullYear()}
+                        <Attribution />
                     </p>
                 </ContentContainer>
             </>

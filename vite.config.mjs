@@ -28,6 +28,7 @@ export default defineConfig({
             '@': path.resolve(__dirname, 'resources/scripts'),
             '@definitions': path.resolve(__dirname, 'resources/scripts/api/definitions'),
             '@feature': path.resolve(__dirname, 'resources/scripts/components/server/features'),
+            '@blueprint': path.resolve(__dirname, 'resources/scripts/blueprint'),
         },
         symlinks: false,
     },

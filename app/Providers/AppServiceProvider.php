@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Pterodactyl\Extensions\Themes\Theme;
+use Pterodactyl\Providers\Blueprint\ExtensionfsConfigProvider;
+use Pterodactyl\Providers\Blueprint\RouteServiceProvider;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 class AppServiceProvider extends ServiceProvider
@@ -56,6 +58,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Merge Blueprint extension fs config with existing filesystem config.
+        $this->app->register(ExtensionfsConfigProvider::class);
+
+        // Load Blueprint's route service provider.
+        $this->app->register(RouteServiceProvider::class);
+
         // Only load the settings service provider if the environment
         // is configured to allow it.
         if (!config('pterodactyl.load_environment_only', false) && $this->app->environment() !== 'testing') {
