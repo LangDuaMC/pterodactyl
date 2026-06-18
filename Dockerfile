@@ -15,13 +15,17 @@ RUN apk add --no-cache bash ca-certificates curl git mariadb-client netcat-openb
     && install-php-extensions bcmath gd pcntl pdo_mysql zip
 
 # Composer deps (cached unless composer.json or lock changes).
+# --no-scripts skips post-install hooks that need app source files.
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # App source + built assets.
 COPY . ./
 COPY --from=assets /app/public/build ./public/build
+
+# Regenerate autoloader so the classmap includes the actual app source.
+RUN composer dump-autoload
 
 # Runtime setup (dirs, permissions, env).
 RUN cp .env.example .env \
