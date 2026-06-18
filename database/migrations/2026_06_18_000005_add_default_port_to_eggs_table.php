@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('eggs', function (Blueprint $table) {
-            $table->integer('default_port')->unsigned()->default(25565)->after('force_outgoing_ip');
+            $table->integer('default_port')->unsigned()->nullable()->after('force_outgoing_ip');
         });
     }
 

@@ -106,7 +106,7 @@
                             </tr>
                             <tr>
                                 <td>Default Connection</td>
-                                <td><code>{{ $server->uuidShort }}:{{ $server->egg->default_port }}</code></td>
+                                <td><code>{{ $server->egg->default_port ? $server->uuidShort . ':' . $server->egg->default_port : $server->allocation->ip . ':' . $server->allocation->port }}</code></td>
                             </tr>
                             <tr>
                                 <td>Connection Alias</td>

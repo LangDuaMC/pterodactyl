@@ -40,7 +40,7 @@ export interface Server {
         ip: string;
         port: number;
     };
-    connection: string;
+    connection: string | null;
     invocation: string;
     dockerImage: string;
     description: string;

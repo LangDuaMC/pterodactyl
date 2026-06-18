@@ -56,7 +56,7 @@ class ServerTransformer extends BaseClientTransformer
                 'ip' => $server->node->daemon_sftp_alias ?: $server->node->fqdn,
                 'port' => $server->node->daemonSFTP,
             ],
-            'connection' => "{$server->uuidShort}:{$server->egg->default_port}",
+            'connection' => !is_null($server->egg->default_port) ? "{$server->uuidShort}:{$server->egg->default_port}" : null,
             'description' => $server->description,
             'limits' => [
                 'memory' => $server->memory,

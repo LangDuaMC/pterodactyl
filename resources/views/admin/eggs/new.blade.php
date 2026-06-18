@@ -48,8 +48,8 @@
                             <div class="form-group">
                                 <div class="form-group">
                                 <label for="pDefaultPort" class="form-label">Default Port</label>
-                                <input type="number" id="pDefaultPort" name="default_port" class="form-control" value="{{ old('default_port', 25565) }}" min="1" max="65535" />
-                                <p class="text-muted small">The default port that servers using this egg will listen on. Used for portless/bindless Docker containers.</p>
+                                <input type="number" id="pDefaultPort" name="default_port" class="form-control" value="{{ old('default_port') }}" min="1" max="65535" />
+                                <p class="text-muted small">The default port that servers using this egg will listen on. Leave empty for traditional allocation-based port assignment. Set a value to enable portless/bindless Docker containers where the connection is shown as the server's UUID followed by this port.</p>
                             </div>
                             <div class="checkbox checkbox-primary no-margin-bottom">
                                     <input id="pForceOutgoingIp" name="force_outgoing_ip" type="checkbox" value="1" {{ \Pterodactyl\Helpers\Utilities::checked('force_outgoing_ip', 0) }} />

@@ -51,6 +51,12 @@ class EnvironmentService
             );
         }
 
+        // If the egg has a default_port set, expose it so the container knows
+        // which port to listen on without requiring a host port binding.
+        if (!is_null($server->egg->default_port)) {
+            $variables->put('SERVER_PORT', $server->egg->default_port);
+        }
+
         // Process dynamically included environment variables.
         foreach ($this->additional as $key => $closure) {
             $variables->put($key, call_user_func($closure, $server));
@@ -66,7 +72,6 @@ class EnvironmentService
     {
         return [
             'STARTUP' => 'startup',
-            'SERVER_PORT' => 'egg.default_port',
             'P_SERVER_LOCATION' => 'location.short',
             'P_SERVER_UUID' => 'uuid',
         ];

@@ -1,10 +1,10 @@
 # Stage 0: build frontend assets.
-FROM --platform=$TARGETOS/$TARGETARCH node:22-alpine AS assets
+FROM --platform=$TARGETOS/$TARGETARCH oven/bun:1 AS assets
 WORKDIR /app
-COPY package.json yarn.lock ./
-RUN npx yarn@1.22.22 install --frozen-lockfile --ignore-scripts
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --ignore-scripts
 COPY . ./
-RUN npx yarn@1.22.22 run build:production
+RUN bun run build:production
 
 # Stage 1: FrankenPHP runtime.
 FROM --platform=$TARGETOS/$TARGETARCH dunglas/frankenphp:1-php8.3-alpine

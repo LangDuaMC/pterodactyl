@@ -127,8 +127,8 @@
         "dev": "vite",
         "watch": "vite build --watch",
         "build": "vite build",
-        "build:production": "yarn run clean && vite build",
-        "serve": "yarn run dev"
+        "build:production": "bun run clean && vite build",
+        "serve": "bun run dev"
     },
     "browserslist": [
         "> 0.5%",

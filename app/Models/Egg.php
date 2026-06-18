@@ -142,14 +142,14 @@ class Egg extends Model implements Identifiable
         'config_logs' => 'required_without:config_from|nullable|json',
         'config_files' => 'required_without:config_from|nullable|json',
         'update_url' => 'sometimes|nullable|string',
-        'default_port' => 'sometimes|integer|min:1|max:65535',
+        'default_port' => 'sometimes|nullable|integer|min:1|max:65535',
         'force_outgoing_ip' => 'sometimes|boolean',
     ];
 
     protected $attributes = [
         'features' => null,
         'file_denylist' => null,
-        'default_port' => 25565,
+        'default_port' => null,
         'config_stop' => null,
         'config_startup' => null,
         'config_logs' => null,

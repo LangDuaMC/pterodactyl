@@ -79,8 +79,8 @@
                             <div class="form-group">
                             <div class="form-group">
                                 <label for="pDefaultPort" class="control-label">Default Port</label>
-                                <input id="pDefaultPort" name="default_port" type="number" class="form-control" value="{{ $egg->default_port ?? 25565 }}" min="1" max="65535" />
-                                <p class="text-muted small">The default port that servers using this egg will listen on. Used for portless/bindless Docker containers.</p>
+                                <input id="pDefaultPort" name="default_port" type="number" class="form-control" value="{{ $egg->default_port ?? '' }}" min="1" max="65535" />
+                                <p class="text-muted small">The default port that servers using this egg will listen on. Leave empty for traditional allocation-based port assignment. Set a value to enable portless/bindless Docker containers where the connection is shown as the server's UUID followed by this port.</p>
                             </div>
                             <div class="form-group">
                                 <label for="pDockerImage" class="control-label">Docker Images <span class="field-required"></span></label>

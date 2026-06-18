@@ -44,7 +44,7 @@ class EggFormRequest extends AdminFormRequest
 
         return array_merge($data, [
             'force_outgoing_ip' => array_get($data, 'force_outgoing_ip', false),
-            'default_port' => (int) array_get($data, 'default_port', 25565),
+            'default_port' => array_get($data, 'default_port') ? (int) array_get($data, 'default_port') : null,
             'features' => array_get($data, 'features', []),
         ]);
     }

@@ -56,7 +56,12 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
         [limits]
     );
 
-    const connection = ServerContext.useStoreState((state) => state.server.data!.connection);
+    const connection = ServerContext.useStoreState((state) => {
+        const conn = state.server.data!.connection;
+        if (conn) return conn;
+        const match = state.server.data!.allocations.find((allocation) => allocation.isDefault);
+        return !match ? 'n/a' : `${match.alias || ip(match.ip)}:${match.port}`;
+    });
 
     useEffect(() => {
         if (!connected || !instance) {
