@@ -77,6 +77,12 @@
                                 <p class="text-muted small">The author of this version of the Egg. Uploading a new Egg configuration from a different author will change this.</p>
                             </div>
                             <div class="form-group">
+                            <div class="form-group">
+                                <label for="pDefaultPort" class="control-label">Default Port</label>
+                                <input id="pDefaultPort" name="default_port" type="number" class="form-control" value="{{ $egg->default_port ?? 25565 }}" min="1" max="65535" />
+                                <p class="text-muted small">The default port that servers using this egg will listen on. Used for portless/bindless Docker containers.</p>
+                            </div>
+                            <div class="form-group">
                                 <label for="pDockerImage" class="control-label">Docker Images <span class="field-required"></span></label>
                                 <textarea id="pDockerImages" name="docker_images" class="form-control" rows="4">{{ implode(PHP_EOL, $images) }}</textarea>
                                 <p class="text-muted small">

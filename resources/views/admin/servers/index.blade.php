@@ -59,7 +59,7 @@
                                 <td><a href="{{ route('admin.users.view', $server->user->id) }}">{{ $server->user->username }}</a></td>
                                 <td><a href="{{ route('admin.nodes.view', $server->node->id) }}">{{ $server->node->name }}</a></td>
                                 <td>
-                                    <code>{{ $server->allocation->alias }}:{{ $server->allocation->port }}</code>
+                                    <code>{{ $server->uuidShort }}:{{ $server->egg->default_port }}</code>
                                 </td>
                                 <td class="text-center">
                                     @if($server->isSuspended())

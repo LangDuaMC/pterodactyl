@@ -16,6 +16,7 @@ _ide_helper.php
 _ide_helper_models.php
 .phpstorm.meta.php
 .yarn
+yarn.lock
 public/assets/manifest.json
 
 # For local development with docker

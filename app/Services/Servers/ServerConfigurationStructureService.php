@@ -70,12 +70,12 @@ class ServerConfigurationStructureService
                 'requires_rebuild' => false,
             ],
             'allocations' => [
-                'force_outgoing_ip' => $server->egg->force_outgoing_ip,
+                'force_outgoing_ip' => false,
                 'default' => [
-                    'ip' => $server->allocation->ip,
-                    'port' => $server->allocation->port,
+                    'ip' => '0.0.0.0',
+                    'port' => $server->egg->default_port,
                 ],
-                'mappings' => $server->getAllocationMappings(),
+                'mappings' => [],
             ],
             'mounts' => $server->mounts->map(function (Mount $mount) {
                 return [
@@ -103,12 +103,10 @@ class ServerConfigurationStructureService
             'uuid' => $server->uuid,
             'build' => [
                 'default' => [
-                    'ip' => $server->allocation->ip,
-                    'port' => $server->allocation->port,
+                    'ip' => '0.0.0.0',
+                    'port' => $server->egg->default_port,
                 ],
-                'ports' => $server->allocations->groupBy('ip')->map(function ($item) {
-                    return $item->pluck('port');
-                })->toArray(),
+                'ports' => [],
                 'env' => $this->environment->handle($server),
                 'oom_disabled' => $server->oom_disabled,
                 'memory' => (int) $server->memory,

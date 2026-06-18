@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property array|null $features
  * @property string $docker_image -- deprecated, use $docker_images
  * @property array<string, string> $docker_images
+ * @property int $default_port
  * @property string $update_url
  * @property bool $force_outgoing_ip
  * @property array|null $file_denylist
@@ -92,6 +93,7 @@ class Egg extends Model implements Identifiable
         'description',
         'features',
         'docker_images',
+        'default_port',
         'force_outgoing_ip',
         'file_denylist',
         'config_files',
@@ -118,6 +120,7 @@ class Egg extends Model implements Identifiable
         'copy_script_from' => 'integer',
         'features' => 'array',
         'docker_images' => 'array',
+        'default_port' => 'integer',
         'file_denylist' => 'array',
     ];
 
@@ -139,12 +142,14 @@ class Egg extends Model implements Identifiable
         'config_logs' => 'required_without:config_from|nullable|json',
         'config_files' => 'required_without:config_from|nullable|json',
         'update_url' => 'sometimes|nullable|string',
+        'default_port' => 'sometimes|integer|min:1|max:65535',
         'force_outgoing_ip' => 'sometimes|boolean',
     ];
 
     protected $attributes = [
         'features' => null,
         'file_denylist' => null,
+        'default_port' => 25565,
         'config_stop' => null,
         'config_startup' => null,
         'config_logs' => null,

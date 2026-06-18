@@ -13,6 +13,7 @@ class EggFormRequest extends AdminFormRequest
             'description' => 'nullable|string',
             'docker_images' => ['required', 'string', 'regex:/^[\w#\.\/\- ]*\|?~?[\w\.\/\-:@ ]*$/im'],
             'force_outgoing_ip' => 'sometimes|boolean',
+            'default_port' => 'sometimes|integer|min:1|max:65535',
             'file_denylist' => 'array',
             'features' => 'sometimes|array',
             'startup' => 'required|string',
@@ -43,6 +44,7 @@ class EggFormRequest extends AdminFormRequest
 
         return array_merge($data, [
             'force_outgoing_ip' => array_get($data, 'force_outgoing_ip', false),
+            'default_port' => (int) array_get($data, 'default_port', 25565),
             'features' => array_get($data, 'features', []),
         ]);
     }

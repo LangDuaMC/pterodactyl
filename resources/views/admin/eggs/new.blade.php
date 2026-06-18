@@ -46,7 +46,12 @@
                                 <p class="text-muted small">A description of this Egg.</p>
                             </div>
                             <div class="form-group">
-                                <div class="checkbox checkbox-primary no-margin-bottom">
+                                <div class="form-group">
+                                <label for="pDefaultPort" class="form-label">Default Port</label>
+                                <input type="number" id="pDefaultPort" name="default_port" class="form-control" value="{{ old('default_port', 25565) }}" min="1" max="65535" />
+                                <p class="text-muted small">The default port that servers using this egg will listen on. Used for portless/bindless Docker containers.</p>
+                            </div>
+                            <div class="checkbox checkbox-primary no-margin-bottom">
                                     <input id="pForceOutgoingIp" name="force_outgoing_ip" type="checkbox" value="1" {{ \Pterodactyl\Helpers\Utilities::checked('force_outgoing_ip', 0) }} />
                                     <label for="pForceOutgoingIp" class="strong">Force Outgoing IP</label>
                                     <p class="text-muted small">

@@ -21,6 +21,7 @@ export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const node = ServerContext.useStoreState((state) => state.server.data!.node);
     const sftp = ServerContext.useStoreState((state) => state.server.data!.sftpDetails, isEqual);
+    const connection = ServerContext.useStoreState((state) => state.server.data!.connection);
 
     return (
         <ServerContentBlock title={'Settings'}>
@@ -66,6 +67,12 @@ export default () => {
                             <div css={tw`flex items-center justify-between mt-2 text-sm`}>
                                 <p>Server ID</p>
                                 <code css={tw`font-mono bg-neutral-900 rounded py-1 px-2`}>{uuid}</code>
+                            </div>
+                        </CopyOnClick>
+                        <CopyOnClick text={connection}>
+                            <div css={tw`flex items-center justify-between mt-2 text-sm`}>
+                                <p>Connection</p>
+                                <code css={tw`font-mono bg-neutral-900 rounded py-1 px-2`}>{connection}</code>
                             </div>
                         </CopyOnClick>
                     </TitledGreyBox>

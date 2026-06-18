@@ -56,11 +56,7 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
         [limits]
     );
 
-    const allocation = ServerContext.useStoreState((state) => {
-        const match = state.server.data!.allocations.find((allocation) => allocation.isDefault);
-
-        return !match ? 'n/a' : `${match.alias || ip(match.ip)}:${match.port}`;
-    });
+    const connection = ServerContext.useStoreState((state) => state.server.data!.connection);
 
     useEffect(() => {
         if (!connected || !instance) {
@@ -90,8 +86,8 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
 
     return (
         <div className={classNames('grid grid-cols-6 gap-2 md:gap-4', className)}>
-            <StatBlock icon={faWifi} title={'Address'} copyOnClick={allocation}>
-                {allocation}
+            <StatBlock icon={faWifi} title={'Address'} copyOnClick={connection}>
+                {connection}
             </StatBlock>
             <StatBlock
                 icon={faClock}
