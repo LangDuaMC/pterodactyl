@@ -122,3 +122,11 @@ Route::group(['prefix' => '/nests'], function () {
         Route::get('/{egg:id}', [Application\Nests\EggController::class, 'view'])->name('api.application.nests.eggs.view');
     });
 });
+
+Route::group(['prefix' => '/tenants'], function () {
+    Route::get('/', [Application\Tenants\TenantController::class, 'index'])->name('api.application.tenants');
+    Route::get('/{tenant:id}', [Application\Tenants\TenantController::class, 'view'])->name('api.application.tenants.view');
+    Route::post('/', [Application\Tenants\TenantController::class, 'store']);
+    Route::patch('/{tenant:id}', [Application\Tenants\TenantController::class, 'update']);
+    Route::delete('/{tenant:id}', [Application\Tenants\TenantController::class, 'delete']);
+});

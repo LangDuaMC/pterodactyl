@@ -27,6 +27,16 @@
                                 <a href="{{ route('admin.servers.new') }}"><button type="button" class="btn btn-sm btn-primary" style="border-radius: 0 3px 3px 0;margin-left:-1px;">Create New</button></a>
                             </div>
                         </div>
+                        <div class="row" style="margin-top:10px;">
+                            <div class="col-md-4 col-md-offset-8">
+                                <select name="filter[tenant_id]" class="form-control input-sm" onchange="this.form.submit()">
+                                    <option value="">All Tenants</option>
+                                    @foreach($tenants as $tenant)
+                                        <option value="{{ $tenant->id }}" {{ (request()->input('filter.tenant_id') == $tenant->id) ? 'selected' : '' }}>{{ $tenant->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>

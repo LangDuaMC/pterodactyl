@@ -21,10 +21,14 @@ class ServerController extends Controller
         $servers = QueryBuilder::for(Server::query()->with('node', 'user', 'allocation'))
             ->allowedFilters([
                 AllowedFilter::exact('owner_id'),
+                AllowedFilter::exact('tenant_id'),
                 AllowedFilter::custom('*', new AdminServerFilter()),
             ])
             ->paginate(config()->get('pterodactyl.paginate.admin.servers'));
 
-        return view('admin.servers.index', ['servers' => $servers]);
+        return view('admin.servers.index', [
+            'servers' => $servers,
+            'tenants' => \Pterodactyl\Models\Tenant::query()->orderBy('name')->get(['id', 'name']),
+        ]);
     }
 }

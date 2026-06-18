@@ -226,3 +226,12 @@ Route::group(['prefix' => 'nests'], function () {
     Route::delete('/egg/{egg:id}', [Admin\Nests\EggController::class, 'destroy']);
     Route::delete('/egg/{egg:id}/variables/{variable:id}', [Admin\Nests\EggVariableController::class, 'destroy']);
 });
+
+Route::group(['prefix' => 'tenants'], function () {
+    Route::get('/', [Admin\Tenants\TenantController::class, 'index'])->name('admin.tenants');
+    Route::get('/new', [Admin\TenantsController::class, 'create'])->name('admin.tenants.new');
+    Route::get('/view/{tenant:id}', [Admin\Tenants\TenantViewController::class, 'index'])->name('admin.tenants.view');
+    Route::post('/new', [Admin\TenantsController::class, 'store'])->name('admin.tenants.store');
+    Route::patch('/view/{tenant:id}', [Admin\TenantsController::class, 'update'])->name('admin.tenants.update');
+    Route::delete('/view/{tenant:id}', [Admin\TenantsController::class, 'delete'])->name('admin.tenants.delete');
+});
