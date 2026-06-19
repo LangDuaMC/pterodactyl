@@ -30,8 +30,8 @@ class MakeUserCommand extends Command
         $root_admin = $this->option('admin') ?? $this->confirm(trans('command/messages.user.ask_admin'));
         $email = $this->option('email') ?? $this->ask(trans('command/messages.user.ask_email'));
         $username = $this->option('username') ?? $this->ask(trans('command/messages.user.ask_username'));
-        $name_first = $this->option('name-first') ?? $this->ask(trans('command/messages.user.ask_name_first'));
-        $name_last = $this->option('name-last') ?? $this->ask(trans('command/messages.user.ask_name_last'));
+        $name_first = $this->option('name-first');
+        $name_last = $this->option('name-last');
 
         if (is_null($password = $this->option('password')) && !$this->option('no-password')) {
             $this->warn(trans('command/messages.user.ask_password_help'));
