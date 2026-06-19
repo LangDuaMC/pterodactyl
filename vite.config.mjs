@@ -8,6 +8,9 @@ const certPath = (file) => path.resolve(__dirname, '../../docker/certificates', 
 const useLocalCerts = process.env.USE_LOCAL_CERTS === 'true';
 
 export default defineConfig({
+    build: {
+        sourcemap: true,
+    },
     plugins: [
         laravel({
             input: ['resources/scripts/index.tsx'],
