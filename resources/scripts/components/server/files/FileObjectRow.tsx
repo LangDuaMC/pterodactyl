@@ -15,26 +15,48 @@ import { join } from 'pathe';
 import { bytesToString } from '@/lib/formatters';
 import styles from './style.module.css';
 
-const Clickable: React.FC<{ file: FileObject }> = memo(({ file, children }) => {
-    const [canRead] = usePermissions(['file.read']);
-    const [canReadContents] = usePermissions(['file.read-content']);
-    const directory = ServerContext.useStoreState((state) => state.files.directory);
+const Clickable: React.FC<{ file: FileObject; onOpenFile?: (path: string, name: string) => void }> = memo(
+    ({ file, children, onOpenFile }) => {
+        const [canRead] = usePermissions(['file.read']);
+        const [canReadContents] = usePermissions(['file.read-content']);
+        const directory = ServerContext.useStoreState((state) => state.files.directory);
 
-    const match = useRouteMatch();
+        const match = useRouteMatch();
 
-    return (file.isFile && (!file.isEditable() || !canReadContents)) || (!file.isFile && !canRead) ? (
-        <div className={styles.details}>{children}</div>
-    ) : (
-        <NavLink
-            className={styles.details}
-            to={`${match.url}${file.isFile ? '/edit' : ''}#${encodePathSegments(join(directory, file.name))}`}
-        >
-            {children}
-        </NavLink>
-    );
-}, isEqual);
+        const canClick =
+            file.isFile
+                ? file.isEditable() && canReadContents
+                : canRead;
 
-const FileObjectRow = ({ file }: { file: FileObject }) => (
+        if (!canClick) {
+            return <div className={styles.details}>{children}</div>;
+        }
+
+        if (file.isFile && onOpenFile) {
+            return (
+                <div
+                    className={styles.details}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => onOpenFile(join(directory, file.name), file.name)}
+                >
+                    {children}
+                </div>
+            );
+        }
+
+        return (
+            <NavLink
+                className={styles.details}
+                to={`${match.url}${file.isFile ? '/edit' : ''}#${encodePathSegments(join(directory, file.name))}`}
+            >
+                {children}
+            </NavLink>
+        );
+    },
+    isEqual,
+);
+
+const FileObjectRow = ({ file, onOpenFile }: { file: FileObject; onOpenFile?: (path: string, name: string) => void }) => (
     <div
         className={styles.file_row}
         key={file.name}

@@ -7,10 +7,18 @@ export interface FileUploadData {
     readonly total: number;
 }
 
+export interface EditorTab {
+    path: string;
+    name: string;
+    mode: string;
+}
+
 export interface ServerFileStore {
     directory: string;
     selectedFiles: string[];
     uploads: Record<string, FileUploadData>;
+    editorTabs: EditorTab[];
+    activeTab: string | null;
 
     setDirectory: Action<ServerFileStore, string>;
     setSelectedFiles: Action<ServerFileStore, string[]>;
@@ -22,12 +30,18 @@ export interface ServerFileStore {
     clearFileUploads: Action<ServerFileStore>;
     removeFileUpload: Action<ServerFileStore, string>;
     cancelFileUpload: Action<ServerFileStore, string>;
+
+    openEditorTab: Action<ServerFileStore, EditorTab>;
+    closeEditorTab: Action<ServerFileStore, string>;
+    setActiveTab: Action<ServerFileStore, string | null>;
 }
 
 const files: ServerFileStore = {
     directory: '/',
     selectedFiles: [],
     uploads: {},
+    editorTabs: [],
+    activeTab: null,
 
     setDirectory: action((state, payload) => {
         state.directory = cleanDirectoryPath(payload);
@@ -69,12 +83,37 @@ const files: ServerFileStore = {
 
     cancelFileUpload: action((state, payload) => {
         if (state.uploads[payload]) {
-            // Abort the request if it is still in flight. If it already completed this is
-            // a no-op.
             state.uploads[payload].abort.abort();
 
             delete state.uploads[payload];
         }
+    }),
+
+    openEditorTab: action((state, payload) => {
+        const exists = state.editorTabs.find((t) => t.path === payload.path);
+        if (!exists) {
+            state.editorTabs = [...state.editorTabs, payload];
+        }
+        state.activeTab = payload.path;
+    }),
+
+    closeEditorTab: action((state, path) => {
+        const idx = state.editorTabs.findIndex((t) => t.path === path);
+        if (idx === -1) return;
+
+        state.editorTabs = state.editorTabs.filter((t) => t.path !== path);
+
+        if (state.activeTab === path) {
+            if (state.editorTabs.length > 0) {
+                state.activeTab = state.editorTabs[Math.min(idx, state.editorTabs.length - 1)].path;
+            } else {
+                state.activeTab = null;
+            }
+        }
+    }),
+
+    setActiveTab: action((state, payload) => {
+        state.activeTab = payload;
     }),
 };
 
