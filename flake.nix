@@ -77,7 +77,7 @@
                   X-Content-Type-Options "nosniff"
                 }
 
-                encode gzip zstd
+                encode gzip
 
                 php_fastcgi localhost:9000 {
                   trusted_proxies private_ranges

@@ -6,6 +6,6 @@
 
 :80 {
     root * /app/public
-    encode zstd br gzip
+    encode gzip
     php_server
 }
