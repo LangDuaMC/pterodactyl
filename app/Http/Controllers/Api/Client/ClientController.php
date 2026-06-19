@@ -57,6 +57,8 @@ class ClientController extends ClientApiController
             }
         } elseif ($type === 'owner') {
             $builder = $builder->where('servers.owner_id', $user->id);
+        } elseif ($user->root_admin) {
+            $builder = $builder;
         } else {
             $builder = $builder->whereIn('servers.id', $user->accessibleServers()->pluck('id')->all());
         }
