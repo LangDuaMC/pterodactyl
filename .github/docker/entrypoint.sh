@@ -48,8 +48,14 @@ do
   sleep 1
 done
 
+echo "Setting server identifiers mode."
+echo "PTERODACTYL_USE_SERVER_IDENTIFIERS=true" >> /app/var/.env
+
 echo "Migrating and seeding database."
 php artisan migrate --seed --force
+
+echo "Reloading Octane workers."
+php artisan octane:reload 2>/dev/null || true
 
 echo "Starting supervisord."
 exec "$@"
