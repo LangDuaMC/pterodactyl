@@ -60,6 +60,7 @@ const ContextMenuHost: React.FC = () => {
     const [showSpinner, setShowSpinner] = useState(false);
     const [modal, setModal] = useState<ModalType | null>(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
+    const [modalFile, setModalFile] = useState<FileObject | null>(null);
     const menuRef = useRef<HTMLDivElement>(null);
 
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
@@ -71,6 +72,7 @@ const ContextMenuHost: React.FC = () => {
         setTarget(null);
         setModal(null);
         setShowConfirmation(false);
+        setModalFile(null);
     }, []);
 
     const handleContextMenu = useCallback((e: MouseEvent) => {
@@ -109,30 +111,32 @@ const ContextMenuHost: React.FC = () => {
         };
     }, [target, handleContextMenu]);
 
-    if (!target) return null;
-
-    const { file, posX, posY, isRoot } = target;
+    const { posX, posY, isRoot } = target ?? { posX: 0, posY: 0, isRoot: false };
+    const file = target?.file ?? modalFile;
 
     const doDeletion = () => {
+        if (!file) return;
         clearFlashes('files');
         mutate((files) => files.filter((f) => f.key !== file.key), false);
         deleteFiles(uuid, directory, [file.name]).catch((error) => {
             mutate();
             clearAndAddHttpError({ key: 'files', error });
         });
-        setTarget(null);
+        close();
     };
 
     const doCopy = () => {
+        if (!file) return;
         setShowSpinner(true);
         clearFlashes('files');
         copyFile(uuid, join(directory, file.name))
             .then(() => mutate())
             .catch((error) => clearAndAddHttpError({ key: 'files', error }))
-            .then(() => { setShowSpinner(false); setTarget(null); });
+            .then(() => { setShowSpinner(false); close(); });
     };
 
     const doDownload = () => {
+        if (!file) return;
         setShowSpinner(true);
         clearFlashes('files');
         getFileDownloadUrl(uuid, join(directory, file.name))
@@ -141,67 +145,76 @@ const ContextMenuHost: React.FC = () => {
                 window.location = url;
             })
             .catch((error) => clearAndAddHttpError({ key: 'files', error }))
-            .then(() => { setShowSpinner(false); setTarget(null); });
+            .then(() => { setShowSpinner(false); close(); });
     };
 
     const doArchive = () => {
+        if (!file) return;
         setShowSpinner(true);
         clearFlashes('files');
         compressFiles(uuid, directory, [file.name])
             .then(() => mutate())
             .catch((error) => clearAndAddHttpError({ key: 'files', error }))
-            .then(() => { setShowSpinner(false); setTarget(null); });
+            .then(() => { setShowSpinner(false); close(); });
     };
 
     const doUnarchive = () => {
+        if (!file) return;
         setShowSpinner(true);
         clearFlashes('files');
         decompressFiles(uuid, directory, file.name)
             .then(() => mutate())
             .catch((error) => clearAndAddHttpError({ key: 'files', error }))
-            .then(() => { setShowSpinner(false); setTarget(null); });
+            .then(() => { setShowSpinner(false); close(); });
     };
 
     const openModal = (m: ModalType) => {
+        if (target) setModalFile(target.file);
         setModal(m);
         setTarget(null);
     };
 
     const closeAfterModal = () => {
         setModal(null);
+        setModalFile(null);
         setTarget(null);
     };
 
-    const showMenuItems = !isRoot;
+    const showMenuItems = target ? !isRoot : false;
 
     return (
         <>
-            <Dialog.Confirm
-                open={showConfirmation}
-                onClose={() => setShowConfirmation(false)}
-                title={`Delete ${file.isFile ? 'File' : 'Directory'}`}
-                confirm={'Delete'}
-                onConfirmed={doDeletion}
-            >
-                You will not be able to recover the contents of{' '}
-                <span className={'font-semibold text-gray-50'}>{file.name}</span> once deleted.
-            </Dialog.Confirm>
-            {modal === 'chmod' ? (
-                <ChmodFileModal
-                    visible
-                    appear
-                    files={[{ file: file.name, mode: file.modeBits }]}
-                    onDismissed={closeAfterModal}
-                />
-            ) : modal === 'rename' || modal === 'move' ? (
-                <RenameFileModal
-                    visible
-                    appear
-                    files={[file.name]}
-                    useMoveTerminology={modal === 'move'}
-                    onDismissed={closeAfterModal}
-                />
-            ) : null}
+            {(modal || showConfirmation) && file && (
+                <>
+                    <Dialog.Confirm
+                        open={showConfirmation}
+                        onClose={() => setShowConfirmation(false)}
+                        title={`Delete ${file.isFile ? 'File' : 'Directory'}`}
+                        confirm={'Delete'}
+                        onConfirmed={doDeletion}
+                    >
+                        You will not be able to recover the contents of{' '}
+                        <span className={'font-semibold text-gray-50'}>{file.name}</span> once deleted.
+                    </Dialog.Confirm>
+                    {modal === 'chmod' ? (
+                        <ChmodFileModal
+                            visible
+                            appear
+                            files={[{ file: file.name, mode: file.modeBits }]}
+                            onDismissed={closeAfterModal}
+                        />
+                    ) : modal === 'rename' || modal === 'move' ? (
+                        <RenameFileModal
+                            visible
+                            appear
+                            files={[file.name]}
+                            useMoveTerminology={modal === 'move'}
+                            onDismissed={closeAfterModal}
+                        />
+                    ) : null}
+                </>
+            )}
+            {!target ? null : ((file) => (
             <Portal>
                 <div
                     ref={menuRef}
@@ -246,7 +259,11 @@ const ContextMenuHost: React.FC = () => {
                                     icon={faTrashAlt}
                                     title={'Delete'}
                                     $danger
-                                    onClick={() => setShowConfirmation(true)}
+                                    onClick={() => {
+                                        if (target) setModalFile(target.file);
+                                        setShowConfirmation(true);
+                                        setTarget(null);
+                                    }}
                                 />
                             </Can>
                         </>
@@ -254,6 +271,7 @@ const ContextMenuHost: React.FC = () => {
                     <DropdownItems />
                 </div>
             </Portal>
+            ))(target.file)}
         </>
     );
 };
