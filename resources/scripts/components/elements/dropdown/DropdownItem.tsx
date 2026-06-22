@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 import { Menu } from '@headlessui/react';
 import styles from './style.module.css';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 
 interface Props {
     children: React.ReactNode | ((opts: { active: boolean; disabled: boolean }) => JSX.Element);

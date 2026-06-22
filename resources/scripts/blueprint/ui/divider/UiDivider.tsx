@@ -1,5 +1,5 @@
 import React from 'react';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 import { DividerProps } from './types';
 
 export default function UiDivider({ 

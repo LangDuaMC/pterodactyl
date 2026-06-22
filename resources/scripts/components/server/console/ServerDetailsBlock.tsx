@@ -14,7 +14,7 @@ import { SocketEvent, SocketRequest } from '@/components/server/events';
 import UptimeDuration from '@/components/server/UptimeDuration';
 import StatBlock from '@/components/server/console/StatBlock';
 import useWebsocketEvent from '@/plugins/useWebsocketEvent';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 import { capitalize } from '@/lib/strings';
 
 import BeforeInformation from '@blueprint/components/Server/Terminal/BeforeInformation';

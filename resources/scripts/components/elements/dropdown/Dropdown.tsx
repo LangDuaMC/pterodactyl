@@ -1,7 +1,7 @@
 import React, { ElementType, forwardRef, useMemo } from 'react';
 import { Menu, Transition } from '@headlessui/react';
 import styles from './style.module.css';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 import DropdownItem from '@/components/elements/dropdown/DropdownItem';
 import DropdownButton from '@/components/elements/dropdown/DropdownButton';
 

@@ -14,7 +14,7 @@ import useEventListener from '@/plugins/useEventListener';
 import { debounce } from 'debounce';
 import { usePersistedState } from '@/plugins/usePersistedState';
 import { SocketEvent, SocketRequest } from '@/components/server/events';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 import { ChevronDoubleRightIcon } from '@heroicons/react/solid';
 
 import CommandRow from '@blueprint/components/Server/Terminal/CommandRow';

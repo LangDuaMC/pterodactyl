@@ -1,6 +1,6 @@
 import React from 'react';
 import { Schedule } from '@/api/server/schedules/getServerSchedules';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 
 interface Props {
     cron: Schedule['cron'];

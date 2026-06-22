@@ -1,21 +1,38 @@
 import Sockette from 'sockette';
-import { EventEmitter } from 'events';
 
-export class Websocket extends EventEmitter {
-    // The socket instance being tracked.
+type Listener = (...args: any[]) => void;
+
+export class Websocket {
     private socket: Sockette | null = null;
-
-    // The URL being connected to for the socket.
     private url: string | null = null;
-
-    // The authentication token passed along with every request to the Daemon.
-    // By default this token expires every 15 minutes and must therefore be
-    // refreshed at a pretty continuous interval. The socket server will respond
-    // with "token expiring" and "token expired" events when approaching 3 minutes
-    // and 0 minutes to expiry.
     private token = '';
+    private listeners = new Map<string, Set<Listener>>();
 
-    // Connects to the websocket instance and sets the token for the initial request.
+    on(event: string, listener: Listener): this {
+        if (!this.listeners.has(event)) {
+            this.listeners.set(event, new Set());
+        }
+        this.listeners.get(event)!.add(listener);
+        return this;
+    }
+
+    addListener(event: string, listener: Listener): this {
+        return this.on(event, listener);
+    }
+
+    removeAllListeners() {
+        this.listeners.clear();
+    }
+
+    removeListener(event: string, listener: Listener): this {
+        this.listeners.get(event)?.delete(listener);
+        return this;
+    }
+
+    private emit(event: string, ...args: any[]) {
+        this.listeners.get(event)?.forEach((fn) => { fn(...args); });
+    }
+
     connect(url: string): this {
         this.url = url;
 
@@ -35,15 +52,8 @@ export class Websocket extends EventEmitter {
                 this.authenticate();
             },
             onreconnect: (evt) => {
-                // We return code 4409 from Wings when a server is suspended. We've
-                // gone ahead and reserved 4400 as well here for future expansion without
-                // having to loop back around.
-                //
-                // If either of those codes is returned go ahead and abort here. Unfortunately
-                // the underlying sockette logic always calls reconnect for any code that isn't
-                // 1000/1001/1003, which is painful but we can just stop the flow here.
-                // @ts-expect-error code is actually present here.
-                if (evt.code === 4409 || evt.code === 4400) {
+                const ev = evt as CloseEvent;
+                if (ev.code === 4409 || ev.code === 4400) {
                     this.close(1000);
                 } else {
                     this.emit('SOCKET_RECONNECT');
@@ -57,8 +67,6 @@ export class Websocket extends EventEmitter {
         return this;
     }
 
-    // Sets the authentication token to use when sending commands back and forth
-    // between the websocket instance.
     setToken(token: string, isUpdate = false): this {
         this.token = token;
 

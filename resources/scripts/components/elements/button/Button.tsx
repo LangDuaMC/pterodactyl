@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 import { ButtonProps, Options } from '@/components/elements/button/types';
 import styles from './style.module.css';
 

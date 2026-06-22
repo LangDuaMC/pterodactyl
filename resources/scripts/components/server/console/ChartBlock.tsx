@@ -1,5 +1,5 @@
 import React from 'react';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 import styles from '@/components/server/console/style.module.css';
 
 interface ChartBlockProps {

@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 import styles from './styles.module.css';
 
 type Props = Omit<React.ComponentProps<'input'>, 'type'>;

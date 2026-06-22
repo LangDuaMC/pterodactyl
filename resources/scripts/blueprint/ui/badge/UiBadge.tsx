@@ -1,5 +1,5 @@
 import React from 'react';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 import styles from '@blueprint/ui/badge/styles.module.css';
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {

@@ -16,7 +16,7 @@ import {
     useRole,
 } from '@floating-ui/react-dom-interactions';
 import { AnimatePresence, motion } from 'framer-motion';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 
 type Interaction = 'hover' | 'click' | 'focus';
 

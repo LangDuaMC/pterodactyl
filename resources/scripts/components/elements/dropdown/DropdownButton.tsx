@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import classNames from 'cnfast';
 import styles from '@/components/elements/dropdown/style.module.css';
 import { ChevronDownIcon } from '@heroicons/react/solid';
 import { Menu } from '@headlessui/react';

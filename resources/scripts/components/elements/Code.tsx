@@ -1,5 +1,5 @@
 import React from 'react';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 
 interface CodeProps {
     dark?: boolean | undefined;

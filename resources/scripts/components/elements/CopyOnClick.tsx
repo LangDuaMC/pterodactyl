@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Fade from '@/components/elements/Fade';
 import Portal from '@/components/elements/Portal';
 import copy from 'copy-to-clipboard';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 
 interface CopyOnClickProps {
     text: string | number | null | undefined;

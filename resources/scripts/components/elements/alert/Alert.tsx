@@ -1,6 +1,6 @@
 import { ExclamationIcon, ShieldExclamationIcon } from '@heroicons/react/outline';
 import React from 'react';
-import classNames from 'classnames';
+import classNames from 'cnfast';
 
 interface AlertProps {
     type: 'warning' | 'danger';

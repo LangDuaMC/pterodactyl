@@ -10,7 +10,6 @@ import {
 } from 'chart.js';
 import { DeepPartial } from 'ts-essentials';
 import { useState } from 'react';
-import { deepmerge, deepmergeCustom } from 'deepmerge-ts';
 import { theme } from 'twin.macro';
 import { hexToRgba } from '@/lib/helpers';
 
@@ -70,8 +69,24 @@ const options: ChartOptions<'line'> = {
     },
 };
 
+function deepMerge<T extends Record<string, any>>(a: T, b: DeepPartial<T>, mergeArrays = true): T {
+    const result = { ...a };
+    for (const key of Object.keys(b as object)) {
+        const val = (b as any)[key];
+        if (val === undefined) continue;
+        if (Array.isArray(val) && Array.isArray((a as any)[key])) {
+            result[key as keyof T] = (mergeArrays ? (a as any)[key].concat(val) : val) as any;
+        } else if (val !== null && typeof val === 'object' && !Array.isArray(val) && typeof (a as any)[key] === 'object') {
+            result[key as keyof T] = deepMerge((a as any)[key], val, mergeArrays);
+        } else {
+            result[key as keyof T] = val as any;
+        }
+    }
+    return result;
+}
+
 function getOptions(opts?: DeepPartial<ChartOptions<'line'>> | undefined): ChartOptions<'line'> {
-    return deepmerge(options, opts || {});
+    return deepMerge(options, opts || {});
 }
 
 type ChartDatasetCallback = (value: ChartDataset<'line'>, index: number) => ChartDataset<'line'>;
@@ -100,7 +115,7 @@ function getEmptyData(label: string, sets = 1, callback?: ChartDatasetCallback |
     };
 }
 
-const merge = deepmergeCustom({ mergeArrays: false });
+const merge = <T extends Record<string, any>>(a: T, b: DeepPartial<T>) => deepMerge(a, b, false);
 
 interface UseChartOptions {
     sets: number;
