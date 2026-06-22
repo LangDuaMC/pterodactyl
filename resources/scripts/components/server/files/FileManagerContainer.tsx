@@ -87,26 +87,23 @@ export default () => {
     const fetchFileContentRef = useRef<(() => Promise<string>) | null>(null);
 
     const skipHashSync = useRef(false);
-    const initialised = useRef(false);
 
     useEffect(() => {
-        if (tabs.length === 0 && !initialised.current) {
-            initialised.current = true;
-            const hash = window.location.hash;
-            if (hash.startsWith('#browser:')) {
-                openBrowserTab(hashToPath(hash.replace('#browser:', '')));
-            } else if (hash.startsWith('#editor:')) {
-                const path = hashToPath(hash.replace('#editor:', ''));
-                openEditorTab({
-                    path,
-                    name: path.split('/').filter(Boolean).pop() || path,
-                    mode: 'text/plain',
-                });
-            } else {
-                openBrowserTab('/');
-            }
+        if (tabs.length > 0) return;
+        const hash = window.location.hash;
+        if (hash.startsWith('#browser:')) {
+            openBrowserTab(hashToPath(hash.replace('#browser:', '')));
+        } else if (hash.startsWith('#editor:')) {
+            const path = hashToPath(hash.replace('#editor:', ''));
+            openEditorTab({
+                path,
+                name: path.split('/').filter(Boolean).pop() || path,
+                mode: 'text/plain',
+            });
+        } else {
+            openBrowserTab('/');
         }
-    }, []);
+    }, [tabs.length, openBrowserTab, openEditorTab]);
 
     useEffect(() => {
         clearFlashes('files');
@@ -269,6 +266,10 @@ export default () => {
                                     </div>
                                 </div>
                             </div>
+                        ) : tabs.length === 0 ? (
+                            <p css={tw`text-sm text-neutral-400 text-center mt-8`}>
+                                Open a folder from the file tree to get started.
+                            </p>
                         ) : (
                             <Spinner size={'large'} centered />
                         )}

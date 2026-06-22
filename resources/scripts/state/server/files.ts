@@ -39,6 +39,9 @@ export interface ServerFileStore {
     navigateBrowserTab: Action<ServerFileStore, string>;
 }
 
+let nextId = 1;
+const uniqueId = (): string => `tab-${nextId++}`;
+
 const tabName = (path: string): string => {
     if (path === '/' || !path) return '/';
     return path.split('/').filter(Boolean).pop() || path;
@@ -100,39 +103,22 @@ const files: ServerFileStore = {
     }),
 
     openBrowserTab: action((state, path) => {
-        const id = `browser:${path}`;
-        const existing = state.tabs.find((t) => t.id === id);
-        if (existing) {
-            state.activeTabId = existing.id;
-            state.directory = existing.path;
-            return;
-        }
-
+        const id = uniqueId();
         state.tabs = [...state.tabs, { id, type: 'browser', path, name: tabName(path) }];
         state.activeTabId = id;
         state.directory = path;
     }),
 
     openEditorTab: action((state, { path, name, mode }) => {
-        const id = `editor:${path}`;
-        const existing = state.tabs.find((t) => t.id === id);
-        if (existing) {
-            state.activeTabId = existing.id;
-            return;
-        }
-
+        const id = uniqueId();
         state.tabs = [...state.tabs, { id, type: 'editor', path, name, mode }];
         state.activeTabId = id;
     }),
 
     closeTab: action((state, tabId) => {
-        const tab = state.tabs.find((t) => t.id === tabId);
-        if (!tab) return;
-
-        const browserCount = state.tabs.filter((t) => t.type === 'browser').length;
-        if (tab.type === 'browser' && browserCount <= 1) return;
-
         const idx = state.tabs.findIndex((t) => t.id === tabId);
+        if (idx === -1) return;
+
         state.tabs = state.tabs.filter((t) => t.id !== tabId);
 
         if (state.activeTabId === tabId) {
@@ -160,12 +146,8 @@ const files: ServerFileStore = {
         const active = state.tabs.find((t) => t.id === state.activeTabId);
         if (!active || active.type !== 'browser') return;
 
-        const newId = `browser:${path}`;
-        const name = tabName(path);
-        active.id = newId;
         active.path = path;
-        active.name = name;
-        state.activeTabId = newId;
+        active.name = tabName(path);
         state.directory = path;
     }),
 };
