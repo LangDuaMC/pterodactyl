@@ -11,7 +11,7 @@ class TenantDeletionService
     {
         $tenant = $tenant instanceof Tenant ? $tenant : Tenant::query()->findOrFail($tenant);
 
-        if ($tenant->servers()->count() > 0) {
+        if (Tenant::supportsServerAssignments() && $tenant->servers()->count() > 0) {
             throw new DisplayException('Cannot delete a tenant with active servers. Remove or reassign the servers first.');
         }
 

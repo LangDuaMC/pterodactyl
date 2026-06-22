@@ -2,6 +2,7 @@
 
 namespace Pterodactyl\Models;
 
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -97,5 +98,10 @@ class Tenant extends Model
         }
 
         return in_array($permission, self::ROLE_PERMISSIONS[$role] ?? [], true);
+    }
+
+    public static function supportsServerAssignments(): bool
+    {
+        return Schema::hasColumn('servers', 'tenant_id');
     }
 }

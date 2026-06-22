@@ -14,7 +14,7 @@ class TenantQuotaService
      */
     public function assertWithinQuota(?int $tenantId, array $data, ?Server $excluding = null): void
     {
-        if (is_null($tenantId)) {
+        if (is_null($tenantId) || !Tenant::supportsServerAssignments()) {
             return;
         }
 

@@ -12,9 +12,15 @@ class TenantController extends Controller
 {
     public function index(Request $request): View
     {
-        $tenants = QueryBuilder::for(
-            Tenant::query()->withCount('servers')
-        )
+        $query = Tenant::query()->select('tenants.*');
+
+        if (Tenant::supportsServerAssignments()) {
+            $query->withCount('servers');
+        } else {
+            $query->selectRaw('0 as servers_count');
+        }
+
+        $tenants = QueryBuilder::for($query)
             ->allowedFilters(['uuid', 'name'])
             ->allowedSorts(['id', 'name'])
             ->paginate(25);

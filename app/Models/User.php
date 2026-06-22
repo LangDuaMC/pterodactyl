@@ -290,20 +290,27 @@ class User extends Model implements
     public function accessibleServers(): Builder
     {
         $userId = $this->id;
+        $supportsTenants = Tenant::supportsServerAssignments();
 
-        return Server::query()
+        $query = Server::query()
             ->select('servers.*')
-            ->leftJoin('subusers', 'subusers.server_id', '=', 'servers.id')
-            ->leftJoin('tenant_user', function ($join) use ($userId) {
+            ->leftJoin('subusers', 'subusers.server_id', '=', 'servers.id');
+
+        if ($supportsTenants) {
+            $query->leftJoin('tenant_user', function ($join) use ($userId) {
                 $join->on('tenant_user.tenant_id', '=', 'servers.tenant_id')
                     ->where('tenant_user.user_id', '=', $userId);
-            })
-            ->where(function (Builder $builder) {
-                $builder->where('servers.owner_id', $this->id)
-                    ->orWhere('subusers.user_id', $this->id)
-                    ->orWhereNotNull('tenant_user.id');
-            })
-            ->groupBy('servers.id');
+            });
+        }
+
+        return $query->where(function (Builder $builder) use ($supportsTenants) {
+            $builder->where('servers.owner_id', $this->id)
+                ->orWhere('subusers.user_id', $this->id);
+
+            if ($supportsTenants) {
+                $builder->orWhereNotNull('tenant_user.id');
+            }
+        })->groupBy('servers.id');
     }
 
     /**
