@@ -124,7 +124,8 @@
         "dev": "vite",
         "watch": "vite build --watch",
         "build": "vite build",
-        "build:production": "bun run clean && vite build",
+        "postbuild": "gzip -kfr public/build",
+        "build:production": "bun run clean && vite build && gzip -kfr public/build",
         "serve": "bun run dev"
     },
     "browserslist": [
