@@ -4,6 +4,8 @@ namespace Pterodactyl\Policies;
 
 use Pterodactyl\Models\User;
 use Pterodactyl\Models\Server;
+use Pterodactyl\Models\Permission;
+use Pterodactyl\Models\Tenant;
 
 class ServerPolicy
 {
@@ -29,7 +31,32 @@ class ServerPolicy
             return true;
         }
 
+        if ($user->hasTenantPermission($server->tenant_id, $this->tenantPermissionFor($ability))) {
+            return true;
+        }
+
         return $this->checkPermission($user, $server, $ability);
+    }
+
+    protected function tenantPermissionFor(string $ability): string
+    {
+        if (in_array($ability, [
+            Permission::ACTION_WEBSOCKET_CONNECT,
+            Permission::ACTION_ACTIVITY_READ,
+            Permission::ACTION_ALLOCATION_READ,
+            Permission::ACTION_BACKUP_READ,
+            Permission::ACTION_DATABASE_READ,
+            Permission::ACTION_FILE_READ,
+            Permission::ACTION_FILE_READ_CONTENT,
+            Permission::ACTION_SCHEDULE_READ,
+            Permission::ACTION_STARTUP_READ,
+        ], true)) {
+            return Tenant::PERMISSION_SERVERS_READ;
+        }
+
+        return str_starts_with($ability, 'user.')
+            ? Tenant::PERMISSION_MEMBERS_MANAGE
+            : Tenant::PERMISSION_SERVERS_MANAGE;
     }
 
     /**

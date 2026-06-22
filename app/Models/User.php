@@ -289,11 +289,19 @@ class User extends Model implements
      */
     public function accessibleServers(): Builder
     {
+        $userId = $this->id;
+
         return Server::query()
             ->select('servers.*')
             ->leftJoin('subusers', 'subusers.server_id', '=', 'servers.id')
+            ->leftJoin('tenant_user', function ($join) use ($userId) {
+                $join->on('tenant_user.tenant_id', '=', 'servers.tenant_id')
+                    ->where('tenant_user.user_id', '=', $userId);
+            })
             ->where(function (Builder $builder) {
-                $builder->where('servers.owner_id', $this->id)->orWhere('subusers.user_id', $this->id);
+                $builder->where('servers.owner_id', $this->id)
+                    ->orWhere('subusers.user_id', $this->id)
+                    ->orWhereNotNull('tenant_user.id');
             })
             ->groupBy('servers.id');
     }
@@ -304,5 +312,22 @@ class User extends Model implements
     public function tenants(): BelongsToMany
     {
         return $this->belongsToMany(Tenant::class)->withPivot('role')->withTimestamps();
+    }
+
+    public function tenantRoleFor(?int $tenantId): ?string
+    {
+        if (is_null($tenantId)) {
+            return null;
+        }
+
+        $tenant = $this->tenants->firstWhere('id', $tenantId)
+            ?? $this->tenants()->whereKey($tenantId)->first();
+
+        return $tenant?->pivot?->role;
+    }
+
+    public function hasTenantPermission(?int $tenantId, string $permission): bool
+    {
+        return Tenant::roleHasPermission($this->tenantRoleFor($tenantId), $permission);
     }
 }

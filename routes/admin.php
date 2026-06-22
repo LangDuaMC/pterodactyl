@@ -231,6 +231,8 @@ Route::group(['prefix' => 'tenants'], function () {
     Route::get('/', [Admin\Tenants\TenantController::class, 'index'])->name('admin.tenants');
     Route::get('/new', [Admin\TenantsController::class, 'create'])->name('admin.tenants.new');
     Route::get('/view/{tenant:id}', [Admin\Tenants\TenantViewController::class, 'index'])->name('admin.tenants.view');
+    Route::post('/view/{tenant:id}/members', [Admin\Tenants\TenantMemberController::class, 'store'])->name('admin.tenants.members.store');
+    Route::delete('/view/{tenant:id}/members/{user:id}', [Admin\Tenants\TenantMemberController::class, 'delete'])->name('admin.tenants.members.delete');
     Route::post('/new', [Admin\TenantsController::class, 'store'])->name('admin.tenants.store');
     Route::patch('/view/{tenant:id}', [Admin\TenantsController::class, 'update'])->name('admin.tenants.update');
     Route::delete('/view/{tenant:id}', [Admin\TenantsController::class, 'delete'])->name('admin.tenants.delete');

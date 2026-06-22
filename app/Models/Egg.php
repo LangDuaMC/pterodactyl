@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string $author
  * @property string $name
  * @property string|null $description
+ * @property array|null $tags
  * @property array|null $features
  * @property string $docker_image -- deprecated, use $docker_images
  * @property array<string, string> $docker_images
@@ -91,6 +92,7 @@ class Egg extends Model implements Identifiable
     protected $fillable = [
         'name',
         'description',
+        'tags',
         'features',
         'docker_images',
         'default_port',
@@ -119,6 +121,7 @@ class Egg extends Model implements Identifiable
         'force_outgoing_ip' => 'boolean',
         'copy_script_from' => 'integer',
         'features' => 'array',
+        'tags' => 'array',
         'docker_images' => 'array',
         'default_port' => 'integer',
         'file_denylist' => 'array',
@@ -129,6 +132,8 @@ class Egg extends Model implements Identifiable
         'uuid' => 'required|string|size:36',
         'name' => 'required|string|max:191',
         'description' => 'string|nullable',
+        'tags' => 'array|nullable',
+        'tags.*' => 'string|max:191',
         'features' => 'array|nullable',
         'author' => 'required|string|email',
         'file_denylist' => 'array|nullable',
@@ -148,6 +153,7 @@ class Egg extends Model implements Identifiable
 
     protected $attributes = [
         'features' => null,
+        'tags' => null,
         'file_denylist' => null,
         'default_port' => null,
         'config_stop' => null,

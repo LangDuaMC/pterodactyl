@@ -51,6 +51,7 @@ class EggTransformer extends BaseTransformer
             'uuid' => $model->uuid,
             'name' => $model->name,
             'nest' => $model->nest_id,
+            'tags' => $model->tags ?? [],
             'author' => $model->author,
             'description' => $model->description,
             // "docker_image" is deprecated, but left here to avoid breaking too many things at once

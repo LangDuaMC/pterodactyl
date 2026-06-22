@@ -13,6 +13,9 @@ class TenantViewController extends Controller
     public function index(Request $request, Tenant $tenant): View
     {
         $tenant->loadCount('servers');
+        $tenant->load(['users' => function ($query) {
+            $query->orderBy('username');
+        }]);
 
         return view('admin.tenants.view.index', [
             'tenant' => $tenant,

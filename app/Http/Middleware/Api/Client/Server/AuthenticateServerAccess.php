@@ -4,6 +4,7 @@ namespace Pterodactyl\Http\Middleware\Api\Client\Server;
 
 use Illuminate\Http\Request;
 use Pterodactyl\Models\Server;
+use Pterodactyl\Models\Tenant;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Pterodactyl\Exceptions\Http\Server\ServerStateConflictException;
 
@@ -37,9 +38,9 @@ class AuthenticateServerAccess
         }
 
         // At the very least, ensure that the user trying to make this request is the
-        // server owner, a subuser, or a root admin. We'll leave it up to the controllers
-        // to authenticate more detailed permissions if needed.
-        if ($user->id !== $server->owner_id && !$user->root_admin) {
+        // server owner, a subuser, root admin, or tenant member. We'll leave it up to
+        // the controllers to authenticate more detailed permissions if needed.
+        if ($user->id !== $server->owner_id && !$user->root_admin && !$user->hasTenantPermission($server->tenant_id, Tenant::PERMISSION_SERVERS_READ)) {
             // Check for subuser status.
             if (!$server->subusers->contains('user_id', $user->id)) {
                 throw new NotFoundHttpException(trans('exceptions.api.resource_not_found'));

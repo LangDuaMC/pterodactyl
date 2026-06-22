@@ -144,6 +144,68 @@
         </div>
     </div>
 </div>
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box box-info">
+            <div class="box-header with-border">
+                <h3 class="box-title">Members</h3>
+            </div>
+            <div class="box-body table-responsive no-padding">
+                <table class="table table-hover">
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                    @foreach($tenant->users as $member)
+                        <tr>
+                            <td>{{ $member->username }}</td>
+                            <td>{{ $member->email }}</td>
+                            <td>
+                                <form action="{{ route('admin.tenants.members.store', $tenant->id) }}" method="POST" class="form-inline">
+                                    {!! csrf_field() !!}
+                                    <input type="hidden" name="user_id" value="{{ $member->id }}" />
+                                    <select name="role" class="form-control input-sm">
+                                        @foreach([\Pterodactyl\Models\Tenant::ROLE_OWNER, \Pterodactyl\Models\Tenant::ROLE_ADMIN, \Pterodactyl\Models\Tenant::ROLE_MEMBER] as $role)
+                                            <option value="{{ $role }}" {{ $member->pivot->role === $role ? 'selected' : '' }}>{{ ucfirst($role) }}</option>
+                                        @endforeach
+                                    </select>
+                                    <button type="submit" class="btn btn-xs btn-primary">Save</button>
+                                </form>
+                            </td>
+                            <td class="text-right">
+                                <form action="{{ route('admin.tenants.members.delete', ['tenant' => $tenant->id, 'user' => $member->id]) }}" method="POST">
+                                    {!! csrf_field() !!}
+                                    {!! method_field('DELETE') !!}
+                                    <button type="submit" class="btn btn-xs btn-danger">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                </table>
+            </div>
+            <div class="box-footer">
+                <form action="{{ route('admin.tenants.members.store', $tenant->id) }}" method="POST" class="form-inline">
+                    {!! csrf_field() !!}
+                    <div class="form-group">
+                        <label class="sr-only" for="memberEmail">Email</label>
+                        <input type="email" id="memberEmail" name="email" class="form-control input-sm" placeholder="user@example.com" />
+                    </div>
+                    <div class="form-group">
+                        <label class="sr-only" for="memberRole">Role</label>
+                        <select id="memberRole" name="role" class="form-control input-sm">
+                            <option value="{{ \Pterodactyl\Models\Tenant::ROLE_MEMBER }}">Member</option>
+                            <option value="{{ \Pterodactyl\Models\Tenant::ROLE_ADMIN }}">Admin</option>
+                            <option value="{{ \Pterodactyl\Models\Tenant::ROLE_OWNER }}">Owner</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">Add Member</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="modal fade" id="deleteTenantModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">

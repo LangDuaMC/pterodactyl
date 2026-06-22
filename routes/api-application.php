@@ -123,6 +123,11 @@ Route::group(['prefix' => '/nests'], function () {
     });
 });
 
+Route::group(['prefix' => '/eggs'], function () {
+    Route::get('/', [Application\Eggs\EggController::class, 'index'])->name('api.application.eggs');
+    Route::get('/{egg:id}', [Application\Eggs\EggController::class, 'view'])->name('api.application.eggs.view');
+});
+
 Route::group(['prefix' => '/tenants'], function () {
     Route::get('/', [Application\Tenants\TenantController::class, 'index'])->name('api.application.tenants');
     Route::get('/{tenant:id}', [Application\Tenants\TenantController::class, 'view'])->name('api.application.tenants.view');

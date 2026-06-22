@@ -28,6 +28,25 @@ class Tenant extends Model
     public const ROLE_ADMIN = 'admin';
     public const ROLE_MEMBER = 'member';
 
+    public const PERMISSION_SERVERS_READ = 'servers.read';
+    public const PERMISSION_SERVERS_MANAGE = 'servers.manage';
+    public const PERMISSION_MEMBERS_MANAGE = 'members.manage';
+
+    public const ROLE_PERMISSIONS = [
+        self::ROLE_OWNER => [
+            self::PERMISSION_SERVERS_READ,
+            self::PERMISSION_SERVERS_MANAGE,
+            self::PERMISSION_MEMBERS_MANAGE,
+        ],
+        self::ROLE_ADMIN => [
+            self::PERMISSION_SERVERS_READ,
+            self::PERMISSION_SERVERS_MANAGE,
+        ],
+        self::ROLE_MEMBER => [
+            self::PERMISSION_SERVERS_READ,
+        ],
+    ];
+
     protected $table = 'tenants';
 
     protected $guarded = ['id', self::CREATED_AT, self::UPDATED_AT];
@@ -69,5 +88,14 @@ class Tenant extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)->withPivot('role')->withTimestamps();
+    }
+
+    public static function roleHasPermission(?string $role, string $permission): bool
+    {
+        if (empty($role)) {
+            return false;
+        }
+
+        return in_array($permission, self::ROLE_PERMISSIONS[$role] ?? [], true);
     }
 }

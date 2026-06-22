@@ -4,6 +4,8 @@ namespace Pterodactyl\Services\Servers;
 
 use Pterodactyl\Models\User;
 use Pterodactyl\Models\Server;
+use Pterodactyl\Models\Permission;
+use Pterodactyl\Models\Tenant;
 
 class GetUserPermissionsService
 {
@@ -24,6 +26,24 @@ class GetUserPermissionsService
             }
 
             return $permissions;
+        }
+
+        if ($user->hasTenantPermission($server->tenant_id, Tenant::PERMISSION_SERVERS_MANAGE)) {
+            return ['*'];
+        }
+
+        if ($user->hasTenantPermission($server->tenant_id, Tenant::PERMISSION_SERVERS_READ)) {
+            return [
+                Permission::ACTION_WEBSOCKET_CONNECT,
+                Permission::ACTION_ACTIVITY_READ,
+                Permission::ACTION_ALLOCATION_READ,
+                Permission::ACTION_BACKUP_READ,
+                Permission::ACTION_DATABASE_READ,
+                Permission::ACTION_FILE_READ,
+                Permission::ACTION_FILE_READ_CONTENT,
+                Permission::ACTION_SCHEDULE_READ,
+                Permission::ACTION_STARTUP_READ,
+            ];
         }
 
         /** @var \Pterodactyl\Models\Subuser|null $subuserPermissions */
