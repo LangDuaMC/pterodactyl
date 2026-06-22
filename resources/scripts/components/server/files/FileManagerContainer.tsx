@@ -25,6 +25,7 @@ import saveFileContents from '@/api/server/files/saveFileContents';
 import CodemirrorEditor from '@/components/elements/CodemirrorEditor';
 import FileTree from '@/components/server/files/FileTree';
 import TabBar from '@/components/server/files/TabBar';
+import ContextMenuHost from '@/components/server/files/ContextMenuHost';
 import Select from '@/components/elements/Select';
 import modes from '@/modes';
 import { encodePathSegments, hashToPath } from '@/helpers';
@@ -274,6 +275,7 @@ export default () => {
                     </div>
                 </div>
             </ErrorBoundary>
+            <ContextMenuHost />
             <AfterContent />
         </ServerContentBlock>
     );

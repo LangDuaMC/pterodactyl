@@ -23,6 +23,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 # App source + built assets.
 COPY . ./
 COPY --from=assets /app/public/build ./public/build
+COPY --from=assets /app/public/icons ./public/icons
 
 # Regenerate autoloader so the classmap includes the actual app source.
 RUN composer dump-autoload

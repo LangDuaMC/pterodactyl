@@ -1,17 +1,17 @@
 import { differenceInHours, format, formatDistanceToNow } from 'date-fns';
 import React, { memo } from 'react';
 import { FileObject } from '@/api/server/files/loadDirectory';
-import FileDropdownMenu from '@/components/server/files/FileDropdownMenu';
 import { ServerContext } from '@/state/server';
 import tw from 'twin.macro';
 import isEqual from 'react-fast-compare';
 import SelectFileCheckbox from '@/components/server/files/SelectFileCheckbox';
-import FileIcon from '@/components/server/files/FileIcon';
 import { usePermissions } from '@/plugins/usePermissions';
 import { join } from 'pathe';
 import { bytesToString } from '@/lib/formatters';
 import modes from '@/modes';
 import styles from './style.module.css';
+import FileIcon from '@/components/server/files/FileIcon';
+import { openContextMenu } from '@/components/server/files/ContextMenuHost';
 
 const findModeByPath = (path: string): string => {
     const filename = path.split('/').pop() || '';
@@ -36,21 +36,21 @@ const findModeByPath = (path: string): string => {
     return 'text/plain';
 };
 
-const Clickable: React.FC<{ file: FileObject; onOpenFile?: (path: string, name: string) => void }> = memo(
-    ({ file, children, onOpenFile }) => {
+const Clickable: React.FC<{ file: FileObject }> = memo(
+    ({ file, children }) => {
         const [canRead] = usePermissions(['file.read']);
         const [canReadContents] = usePermissions(['file.read-content']);
         const directory = ServerContext.useStoreState((state) => state.files.directory);
         const navigateBrowserTab = ServerContext.useStoreActions((a) => a.files.navigateBrowserTab);
         const openEditorTab = ServerContext.useStoreActions((a) => a.files.openEditorTab);
 
-        const canClick = file.isFile ? file.isEditable() && canReadContents : canRead;
+        const canClick = file.isFile ? canReadContents : canRead;
 
         if (!canClick) {
             return <div className={styles.details}>{children}</div>;
         }
 
-        if (file.isFile && onOpenFile) {
+        if (file.isFile) {
             return (
                 <div
                     className={styles.details}
@@ -69,20 +69,12 @@ const Clickable: React.FC<{ file: FileObject; onOpenFile?: (path: string, name: 
             );
         }
 
-        if (!file.isFile) {
-            return (
-                <div
-                    className={styles.details}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => navigateBrowserTab(join(directory, file.name))}
-                >
-                    {children}
-                </div>
-            );
-        }
-
         return (
-            <div className={styles.details}>
+            <div
+                className={styles.details}
+                style={{ cursor: 'pointer' }}
+                onClick={() => navigateBrowserTab(join(directory, file.name))}
+            >
                 {children}
             </div>
         );
@@ -102,11 +94,7 @@ const FileObjectRow = ({
         key={file.name}
         onContextMenu={(e) => {
             e.preventDefault();
-            window.dispatchEvent(new CustomEvent('pterodactyl:files:ctx:close'));
-            const x = e.clientX;
-            setTimeout(() => {
-                window.dispatchEvent(new CustomEvent(`pterodactyl:files:ctx:${file.key}`, { detail: x }));
-            }, 0);
+            openContextMenu(file, e.clientX, e.clientY);
         }}
     >
         <SelectFileCheckbox name={file.name} />
@@ -128,7 +116,6 @@ const FileObjectRow = ({
                     : formatDistanceToNow(file.modifiedAt, { addSuffix: true })}
             </div>
         </Clickable>
-        <FileDropdownMenu file={file} />
     </div>
 );
 

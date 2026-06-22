@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faChevronRight,
@@ -10,8 +10,8 @@ import { join } from 'pathe';
 import tw from 'twin.macro';
 import styled from 'styled-components/macro';
 import SelectFileCheckbox from '@/components/server/files/SelectFileCheckbox';
-import FileDropdownMenu from '@/components/server/files/FileDropdownMenu';
 import FileIcon from '@/components/server/files/FileIcon';
+import { openContextMenu } from '@/components/server/files/ContextMenuHost';
 
 const TreeContainer = styled.div`
     ${tw`text-sm overflow-y-auto overflow-x-hidden select-none`}
@@ -56,42 +56,37 @@ const TreeNode = React.memo(
             );
         }, [currentDirectory, path, file.isFile]);
 
-        const toggle = useCallback(() => {
-            if (!file.isFile) {
-                setExpanded((prev) => {
-                    if (!prev && children === null) {
-                        setLoading(true);
-                        loadDirectory(uuid, path)
-                            .then(setChildren)
-                            .catch(() => setChildren([]))
-                            .finally(() => setLoading(false));
-                    }
-                    return !prev;
-                });
+        const loadChildren = useCallback(() => {
+            if (children === null) {
+                setLoading(true);
+                loadDirectory(uuid, path)
+                    .then(setChildren)
+                    .catch(() => setChildren([]))
+                    .finally(() => setLoading(false));
             }
-        }, [file.isFile, path, uuid, children]);
+        }, [path, uuid, children]);
+
+        const handleToggle = useCallback(() => {
+            if (!file.isFile) {
+                loadChildren();
+                setExpanded((prev) => !prev);
+            }
+        }, [file.isFile, loadChildren]);
 
         const handleNameClick = useCallback((e: React.MouseEvent) => {
             e.stopPropagation();
             if (file.isFile) {
                 onOpenFile(path, file.name);
             } else {
-                if (!expanded && children === null) {
-                    setLoading(true);
-                    loadDirectory(uuid, path)
-                        .then(setChildren)
-                        .catch(() => setChildren([]))
-                        .finally(() => setLoading(false));
-                }
-                setExpanded((prev) => !prev);
+                handleToggle();
                 onOpenBrowserTab(path);
             }
-        }, [file.isFile, path, file.name, onOpenFile, onOpenBrowserTab, expanded, children, uuid]);
+        }, [file.isFile, path, file.name, onOpenFile, handleToggle, onOpenBrowserTab]);
 
         const handleChevronClick = useCallback((e: React.MouseEvent) => {
             e.stopPropagation();
-            toggle();
-        }, [toggle]);
+            handleToggle();
+        }, [handleToggle]);
 
         const isActive = !file.isFile && currentDirectory === path;
 
@@ -99,25 +94,19 @@ const TreeNode = React.memo(
             <>
                 <div
                     css={[
-                        tw`flex items-center gap-1 px-1 py-0.5 rounded whitespace-nowrap hover:bg-neutral-600`,
+                        tw`flex items-center gap-1 px-1 py-0.5 rounded whitespace-nowrap`,
                         isActive && tw`bg-neutral-600 text-neutral-100`,
                         !isActive && tw`text-neutral-400 hover:text-neutral-200`,
                     ]}
                     style={{ paddingLeft: `${depth * 16 + 4}px` }}
                     onContextMenu={(e) => {
                         e.preventDefault();
-                        window.dispatchEvent(new CustomEvent('pterodactyl:files:ctx:close'));
-                        const x = e.clientX;
-                        setTimeout(() => {
-                            window.dispatchEvent(
-                                new CustomEvent(`pterodactyl:files:ctx:${file.key}`, { detail: x }),
-                            );
-                        }, 0);
+                        openContextMenu(file, e.clientX, e.clientY);
                     }}
                 >
-                    {/* Chevron: expand/collapse */}
+                    {/* Chevron: click to expand/collapse */}
                     <span
-                        css={tw`w-3 flex-shrink-0 text-neutral-500 cursor-pointer`}
+                        css={tw`w-5 flex-shrink-0 flex items-center justify-center text-neutral-500 cursor-pointer py-1 -my-1`}
                         onClick={handleChevronClick}
                     >
                         {!file.isFile && (
@@ -130,32 +119,29 @@ const TreeNode = React.memo(
                         {!file.isFile && <SelectFileCheckbox name={file.name} />}
                     </span>
 
-                    {/* File/folder icon */}
-                    <span css={tw`w-4 flex-shrink-0 flex items-center justify-center`}>
-                        <FileIcon
-                            name={file.name}
-                            isFile={file.isFile}
-                            isSymlink={file.isSymlink}
-                            isArchive={file.isArchiveType()}
-                            isExpanded={expanded}
-                            size={14}
-                        />
-                    </span>
-
-                    {/* Name: navigate */}
+                    {/* File/folder icon + name: navigate (for folders: expands + opens tab) */}
                     <span
                         css={[
-                            tw`truncate cursor-pointer`,
+                            tw`flex items-center gap-1 truncate cursor-pointer py-1 -my-1 flex-1 min-w-0`,
                             !file.isFile && tw`text-neutral-300`,
                             file.isFile && tw`text-neutral-400`,
                         ]}
                         onClick={handleNameClick}
                     >
-                        {file.name}
+                        <span css={tw`w-4 flex-shrink-0 flex items-center justify-center`}>
+                            <FileIcon
+                                name={file.name}
+                                isFile={file.isFile}
+                                isSymlink={file.isSymlink}
+                                isArchive={file.isArchiveType()}
+                                isExpanded={expanded}
+                                size={14}
+                            />
+                        </span>
+                        <span css={tw`truncate`}>{file.name}</span>
                     </span>
 
-                    {loading && <span css={tw`text-neutral-600 text-xs`}>...</span>}
-                    <FileDropdownMenu file={file} noToggle />
+                    {loading && <span css={tw`text-neutral-600 text-xs flex-shrink-0`}>...</span>}
                 </div>
                 {!file.isFile && expanded && children && (
                     <>
@@ -216,25 +202,17 @@ const FileTree: React.FC<{
 
     return (
         <TreeContainer>
-            <FileDropdownMenu file={rootFile} noToggle isRoot>
-                <div
-                    css={tw`flex items-center gap-1 px-2 py-0.5 text-neutral-300 cursor-pointer hover:text-neutral-100`}
-                    onClick={() => openBrowserTab('/')}
-                    onContextMenu={(e) => {
-                        e.preventDefault();
-                        window.dispatchEvent(new CustomEvent('pterodactyl:files:ctx:close'));
-                        const x = e.clientX;
-                        setTimeout(() => {
-                            window.dispatchEvent(
-                                new CustomEvent(`pterodactyl:files:ctx:dir_/`, { detail: x }),
-                            );
-                        }, 0);
-                    }}
-                >
-                    <FileIcon name='/' isFile={false} isExpanded size={14} />
-                    <span css={tw`text-xs font-medium`}>/ (root)</span>
-                </div>
-            </FileDropdownMenu>
+            <div
+                css={tw`flex items-center gap-1 px-2 py-0.5 text-neutral-300 cursor-pointer hover:text-neutral-100`}
+                onClick={() => openBrowserTab('/')}
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    openContextMenu(rootFile, e.clientX, e.clientY, true);
+                }}
+            >
+                <FileIcon name='/' isFile={false} isExpanded size={14} />
+                <span css={tw`text-xs font-medium`}>/ (root)</span>
+            </div>
             {roots.map((root) => (
                 <TreeNode
                     key={root.key}
