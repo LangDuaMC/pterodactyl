@@ -201,6 +201,9 @@ const ContextMenuHost: React.FC = () => {
                 <div
                     ref={menuRef}
                     onContextMenu={(e) => e.preventDefault()}
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setTarget(null);
+                    }}
                     style={{
                         position: 'fixed',
                         left: `${Math.max(4, Math.min(posX - 192, window.innerWidth - 196))}px`,
@@ -209,7 +212,6 @@ const ContextMenuHost: React.FC = () => {
                         zIndex: 9999,
                     }}
                     css={tw`bg-neutral-800 p-2 rounded border border-neutral-700 shadow-lg text-neutral-200`}
-                    onClick={() => setTarget(null)}
                 >
                     <SpinnerOverlay visible={showSpinner} fixed size={'large'} />
                     {showMenuItems ? (
