@@ -94,9 +94,9 @@ const TreeNode = React.memo(
             <>
                 <div
                     css={[
-                        tw`flex items-center gap-1 px-1 py-0.5 rounded whitespace-nowrap`,
+                        tw`flex items-center gap-1 px-1 py-0.5 rounded whitespace-nowrap cursor-default`,
                         isActive && tw`bg-neutral-600 text-neutral-100`,
-                        !isActive && tw`text-neutral-400 hover:text-neutral-200`,
+                        !isActive && tw`text-neutral-400 hover:bg-neutral-700/60 hover:text-neutral-200`,
                     ]}
                     style={{ paddingLeft: `${depth * 16 + 4}px` }}
                     onContextMenu={(e) => {
@@ -203,7 +203,7 @@ const FileTree: React.FC<{
     return (
         <TreeContainer>
             <div
-                css={tw`flex items-center gap-1 px-2 py-0.5 text-neutral-300 cursor-pointer hover:text-neutral-100`}
+                css={tw`flex items-center gap-1 px-2 py-0.5 text-neutral-300 cursor-pointer hover:bg-neutral-700/60 hover:text-neutral-100`}
                 onClick={() => openBrowserTab('/')}
                 onContextMenu={(e) => {
                     e.preventDefault();

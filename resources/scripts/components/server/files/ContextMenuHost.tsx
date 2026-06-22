@@ -162,6 +162,11 @@ const ContextMenuHost: React.FC = () => {
             .then(() => { setShowSpinner(false); setTarget(null); });
     };
 
+    const openModal = (m: ModalType) => {
+        setModal(m);
+        setTarget(null);
+    };
+
     const closeAfterModal = () => {
         setModal(null);
         setTarget(null);
@@ -217,9 +222,9 @@ const ContextMenuHost: React.FC = () => {
                     {showMenuItems ? (
                         <>
                             <Can action={'file.update'}>
-                                <ItemIcon icon={faPencilAlt} title={'Rename'} onClick={() => setModal('rename')} />
-                                <ItemIcon icon={faLevelUpAlt} title={'Move'} onClick={() => setModal('move')} />
-                                <ItemIcon icon={faFileCode} title={'Permissions'} onClick={() => setModal('chmod')} />
+                                <ItemIcon icon={faPencilAlt} title={'Rename'} onClick={() => openModal('rename')} />
+                                <ItemIcon icon={faLevelUpAlt} title={'Move'} onClick={() => openModal('move')} />
+                                <ItemIcon icon={faFileCode} title={'Permissions'} onClick={() => openModal('chmod')} />
                             </Can>
                             {file.isFile && (
                                 <Can action={'file.create'}>
