@@ -24,6 +24,7 @@
         "easy-peasy": "^4.0.1",
         "formik": "^2.2.6",
         "framer-motion": "^6.3.10",
+        "ghostty-web": "^0.4.0",
         "i18next": "^25.8.0",
         "i18next-http-backend": "^3.0.2",
         "i18next-multiload-backend-adapter": "^2.3.0",
@@ -44,12 +45,6 @@
         "tailwindcss": "^4.1.14",
         "use-fit-text": "^2.4.0",
         "uuid": "^13.0.0",
-        "xterm": "^4.19.0",
-        "xterm-addon-fit": "^0.5.0",
-        "xterm-addon-search": "^0.9.0",
-        "xterm-addon-search-bar": "^0.2.0",
-        "xterm-addon-unicode11": "^0.6.0",
-        "xterm-addon-web-links": "^0.6.0",
         "yup": "^0.29.1"
     },
     "devDependencies": {

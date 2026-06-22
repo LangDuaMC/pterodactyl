@@ -33,19 +33,15 @@
     }
 
     & > .container {
-        @apply rounded-t p-1 sm:p-2 bg-black min-h-[16rem] flex-1 font-mono text-sm;
+        @apply rounded-t p-1 sm:p-2 font-mono text-sm flex-1 min-h-[16rem] relative overflow-hidden;
+        background: #131a20;
+    }
 
-        & #terminal {
-            @apply h-full;
-
-            &::-webkit-scrollbar-track {
-                @apply w-2;
-            }
-
-            &::-webkit-scrollbar-thumb {
-                @apply bg-gray-900;
-            }
-        }
+    & .scroll_btn {
+        @apply absolute bottom-2 right-2 z-10 flex items-center justify-center;
+        @apply w-8 h-8 rounded shadow-lg cursor-pointer select-none;
+        @apply text-gray-100 bg-gray-800 hover:bg-gray-700;
+        @apply transition-colors duration-100;
     }
 
     & .command_icon {
