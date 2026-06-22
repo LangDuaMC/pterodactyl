@@ -9,6 +9,10 @@ class AddTagsToEggsTable extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('eggs', 'tags')) {
+            return;
+        }
+
         Schema::table('eggs', function (Blueprint $table) {
             $table->json('tags')->nullable()->after('description');
         });

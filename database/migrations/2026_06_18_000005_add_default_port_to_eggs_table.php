@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('eggs', 'default_port')) {
+            return;
+        }
+
         Schema::table('eggs', function (Blueprint $table) {
             $table->integer('default_port')->unsigned()->nullable()->after('force_outgoing_ip');
         });

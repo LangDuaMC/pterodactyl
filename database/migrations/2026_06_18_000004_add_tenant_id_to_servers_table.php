@@ -8,6 +8,10 @@ class AddTenantIdToServersTable extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('servers', 'tenant_id')) {
+            return;
+        }
+
         Schema::table('servers', function (Blueprint $table) {
             $table->unsignedInteger('tenant_id')->nullable()->after('external_id');
             $table->foreign('tenant_id')->references('id')->on('tenants')->nullOnDelete();

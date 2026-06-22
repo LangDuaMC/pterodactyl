@@ -240,6 +240,10 @@ class Server extends Model implements Identifiable
      */
     public function tenant(): BelongsTo
     {
+        if (!Tenant::supportsServerAssignments()) {
+            return $this->belongsTo(Tenant::class, 'tenant_id')->whereRaw('1 = 0');
+        }
+
         return $this->belongsTo(Tenant::class);
     }
 

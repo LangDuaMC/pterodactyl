@@ -80,6 +80,10 @@ class Tenant extends Model
      */
     public function servers(): HasMany
     {
+        if (!self::supportsServerAssignments()) {
+            return $this->hasMany(Server::class, 'id', 'id')->whereRaw('1 = 0');
+        }
+
         return $this->hasMany(Server::class);
     }
 
