@@ -127,16 +127,15 @@ export default () => {
     const activeTab = tabs.find((t) => t.id === activeTabId) || null;
 
     useEffect(() => {
-        if (activeTab?.type !== 'editor') return;
-        const tab = activeTab;
+        if (!activeTab || activeTab.type !== 'editor') return;
 
-        setEditorMode(tab.mode || 'text/plain');
+        setEditorMode(activeTab.mode || 'text/plain');
         setEditorLoading(true);
-        getFileContents(uuid, tab.path)
+        getFileContents(uuid, activeTab.path)
             .then(setEditorContent)
             .catch(() => setEditorContent(''))
             .finally(() => setEditorLoading(false));
-    }, [activeTab?.id, activeTab?.type]);
+    }, [activeTab?.id, uuid]);
 
     const save = useCallback(() => {
         if (!activeTab || activeTab.type !== 'editor' || !fetchFileContentRef.current) return;

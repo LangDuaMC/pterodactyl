@@ -11,10 +11,10 @@ export default () => {
 
     return useSWR<FileObject[]>(
         getDirectorySwrKey(uuid, directory),
-        () => loadDirectory(uuid, cleanDirectoryPath(directory)),
+        () => loadDirectory(uuid, directory === '/' ? '/' : cleanDirectoryPath(directory)),
         {
             focusThrottleInterval: 30000,
-            revalidateOnMount: false,
+            revalidateOnMount: true,
             refreshInterval: 0,
             errorRetryCount: 2,
         },
