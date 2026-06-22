@@ -56,7 +56,7 @@ const inputStyle = css<Props>`
     }
 
     &:not(:disabled):not(:read-only):focus {
-        ${tw`shadow-md border-primary-300 ring-2 ring-primary-400 ring-opacity-50`};
+        ${tw`shadow-md border-primary-300 ring-2 ring-primary-400/50`};
         ${(props) => props.hasError && tw`border-red-300 ring-red-200`};
     }
 

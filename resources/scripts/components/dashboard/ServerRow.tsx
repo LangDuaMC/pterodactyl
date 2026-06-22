@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEthernet, faHdd, faMemory, faMicrochip, faServer } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
@@ -56,14 +56,16 @@ const StatusIndicatorBox = styled(GreyRowBox)<{ $status: ServerPowerState | unde
 type Timer = ReturnType<typeof setInterval>;
 
 export default ({ server, className }: { server: Server; className?: string }) => {
-    const interval = useRef<Timer>(null) as React.MutableRefObject<Timer>;
     const [isSuspended, setIsSuspended] = useState(server.status === 'suspended');
     const [stats, setStats] = useState<ServerStats | null>(null);
 
-    const getStats = () =>
-        getServerResourceUsage(server.uuid)
-            .then((data) => setStats(data))
-            .catch((error) => console.error(error));
+    const getStats = useCallback(
+        () =>
+            getServerResourceUsage(server.uuid)
+                .then((data) => setStats(data))
+                .catch((error) => console.error(error)),
+        [server.uuid],
+    );
 
     useEffect(() => {
         setIsSuspended(stats?.isSuspended || server.status === 'suspended');
@@ -74,14 +76,18 @@ export default ({ server, className }: { server: Server; className?: string }) =
         // the server is suspended.
         if (isSuspended || server.isNodeUnderMaintenance) return;
 
+        let interval: Timer | undefined;
+
         getStats().then(() => {
-            interval.current = setInterval(() => getStats(), 30000);
+            interval = setInterval(() => getStats(), 30000);
         });
 
         return () => {
-            interval.current && clearInterval(interval.current);
+            if (interval) {
+                clearInterval(interval);
+            }
         };
-    }, [isSuspended, server.isNodeUnderMaintenance]);
+    }, [getStats, isSuspended, server.isNodeUnderMaintenance]);
 
     const alarms = { cpu: false, memory: false, disk: false };
     if (stats) {
@@ -103,11 +109,16 @@ export default ({ server, className }: { server: Server; className?: string }) =
                 <div>
                     <BeforeEntryName />
                     <p css={tw`text-lg break-words`}>{server.name}</p>
+                    {server.tenant && (
+                        <p css={tw`text-xs uppercase tracking-wide text-cyan-400 mt-1`}>
+                            Tenant: {server.tenant.name}
+                        </p>
+                    )}
                     <AfterEntryName />
                     {!!server.description && (
                         <div>
                             <BeforeEntryDescription />
-                            <p css={tw`text-sm text-neutral-300 break-words line-clamp-2`}>{server.description}</p>
+                            <p className={'text-sm text-neutral-300 break-words line-clamp-2'}>{server.description}</p>
                             <AfterEntryDescription />
                         </div>
                     )}

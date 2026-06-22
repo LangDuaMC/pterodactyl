@@ -3,9 +3,11 @@ import path from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import laravel from 'laravel-vite-plugin';
+import tailwindcss from '@tailwindcss/vite';
 
 const certPath = (file) => path.resolve(__dirname, '../../docker/certificates', file);
 const useLocalCerts = process.env.USE_LOCAL_CERTS === 'true';
+const isProduction = process.env.NODE_ENV === 'production';
 
 export default defineConfig({
     build: {
@@ -16,9 +18,23 @@ export default defineConfig({
             input: ['resources/scripts/index.tsx'],
             refresh: ['resources/views/**', 'routes/**'],
         }),
+        tailwindcss(),
         react({
             babel: {
-                plugins: ['babel-plugin-macros', 'babel-plugin-styled-components'],
+                plugins: [
+                    'babel-plugin-macros',
+                    [
+                        'babel-plugin-styled-components',
+                        {
+                            displayName: !isProduction,
+                            fileName: !isProduction,
+                            minify: isProduction,
+                            pure: true,
+                            ssr: true,
+                            transpileTemplateLiterals: isProduction,
+                        },
+                    ],
+                ],
             },
         }),
     ],

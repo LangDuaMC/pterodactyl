@@ -12,7 +12,7 @@
         "@heroicons/react": "^1.0.6",
         "@preact/signals-react": "^1.2.1",
         "@tailwindcss/forms": "^0.5.2",
-        "@tailwindcss/line-clamp": "^0.4.4",
+        "@tailwindcss/vite": "^4.1.14",
         "axios": "^1.13.2",
         "boring-avatars": "^1.7.0",
         "chart.js": "^3.8.0",
@@ -41,7 +41,7 @@
         "styled-components": "^5.3.0",
         "styled-components-breakpoint": "^3.0.0-preview.20",
         "swr": "^0.2.3",
-        "tailwindcss": "^3.0.24",
+        "tailwindcss": "^4.1.14",
         "use-fit-text": "^2.4.0",
         "uuid": "^13.0.0",
         "xterm": "^4.19.0",
@@ -70,16 +70,12 @@
         "@types/uuid": "^3.4.5",
         "@types/yup": "^0.29.3",
         "@vitejs/plugin-react": "^5.0.0",
-        "autoprefixer": "^10.4.7",
         "babel-plugin-styled-components": "^2.0.7",
         "laravel-vite-plugin": "^2.0.0",
         "oxfmt": "^0.55.0",
         "oxlint": "^1.70.0",
         "postcss": "^8.5.6",
-        "postcss-import": "^14.1.0",
         "postcss-loader": "^8.2.0",
-        "postcss-nesting": "^13.0.2",
-        "postcss-preset-env": "^10.4.0",
         "redux-devtools-extension": "^2.13.8",
         "ts-essentials": "^9.1.2",
         "twin.macro": "^2.8.2",
@@ -101,10 +97,12 @@
         "serve": "bun run dev"
     },
     "browserslist": [
-        "> 0.5%",
-        "last 2 versions",
-        "firefox esr",
-        "not dead"
+        "fully supports wasm",
+        "fully supports webgl",
+        "fully supports flexbox",
+        "fully supports canvas",
+        "fully supports css-cascade-layers",
+        "> 5%"
     ],
     "babelMacros": {
         "twin": {

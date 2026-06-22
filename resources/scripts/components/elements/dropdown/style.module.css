@@ -1,3 +1,5 @@
+@reference "../../../assets/tailwind.css";
+
 .menu {
     @apply relative inline-block text-left;
 
@@ -13,7 +15,7 @@
         &:focus,
         &:focus-within,
         &:active {
-            @apply ring-2 ring-opacity-50 ring-neutral-300 text-white;
+            @apply ring-2 ring-neutral-300/50 text-white;
         }
 
         & svg {

@@ -6,6 +6,7 @@ use Ramsey\Uuid\Uuid;
 use Pterodactyl\Models\User;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Subuser;
+use Pterodactyl\Models\Tenant;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Models\Permission;
 
@@ -38,6 +39,34 @@ class ClientControllerTest extends ClientApiIntegrationTestCase
         $response->assertJsonPath('data.0.attributes.server_owner', true);
         $response->assertJsonPath('meta.pagination.total', 1);
         $response->assertJsonPath('meta.pagination.per_page', 50);
+    }
+
+    /**
+     * Test that tenant membership data is exposed on the client server contract so the SPA can
+     * group and label servers by tenant.
+     */
+    public function testTenantDataIsReturnedWithServers()
+    {
+        $user = User::factory()->create();
+        $tenant = Tenant::factory()->create([
+            'name' => 'Acme Group',
+            'description' => 'Primary tenant for the team.',
+        ]);
+
+        $server = $this->createServerModel([
+            'user_id' => $user->id,
+            'tenant_id' => $tenant->id,
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/client');
+
+        $response->assertOk();
+        $response->assertJsonPath('data.0.attributes.tenant_id', $tenant->id);
+        $response->assertJsonPath('data.0.attributes.tenant.id', $tenant->id);
+        $response->assertJsonPath('data.0.attributes.tenant.uuid', $tenant->uuid);
+        $response->assertJsonPath('data.0.attributes.tenant.name', $tenant->name);
+        $response->assertJsonPath('data.0.attributes.tenant.description', $tenant->description);
+        $response->assertJsonPath('data.0.attributes.identifier', $server->uuidShort);
     }
 
     /**

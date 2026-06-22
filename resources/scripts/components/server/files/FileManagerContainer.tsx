@@ -181,7 +181,7 @@ export default () => {
                                 <div css={tw`bg-neutral-800 rounded-b border-t border-neutral-700 relative`}>
                                     {editorLoading && (
                                         <div
-                                            css={tw`absolute inset-0 z-10 flex items-center justify-center bg-neutral-800 bg-opacity-75`}
+                                            css={tw`absolute inset-0 z-10 flex items-center justify-center bg-neutral-800/75`}
                                         >
                                             <Spinner size={'small'} />
                                         </div>
