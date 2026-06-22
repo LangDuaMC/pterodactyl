@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faBoxOpen,
@@ -67,8 +67,27 @@ const ContextMenuHost: React.FC = () => {
     const { mutate } = useFileManagerSwr();
     const { clearAndAddHttpError, clearFlashes } = useFlash();
 
+    const close = useCallback(() => {
+        setTarget(null);
+        setModal(null);
+        setShowConfirmation(false);
+    }, []);
+
+    const handleContextMenu = useCallback((e: MouseEvent) => {
+        if (menuRef.current && menuRef.current.contains(e.target as Node)) {
+            e.preventDefault();
+            return;
+        }
+        close();
+    }, [close]);
+
     useEffect(() => {
         const handler = (e: CustomEvent<ContextTarget>) => {
+            const { posX, posY } = e.detail;
+            if (menuRef.current) {
+                menuRef.current.style.left = `${posX}px`;
+                menuRef.current.style.top = `${posY}px`;
+            }
             setTarget(e.detail);
         };
         window.addEventListener('pterodactyl:files:ctx:open', handler as EventListener);
@@ -82,16 +101,13 @@ const ContextMenuHost: React.FC = () => {
                 setTarget(null);
             }
         };
-        const handleContext = () => setTarget(null);
-        setTimeout(() => {
-            document.addEventListener('click', handleClick);
-            document.addEventListener('contextmenu', handleContext);
-        }, 0);
+        document.addEventListener('click', handleClick);
+        document.addEventListener('contextmenu', handleContextMenu);
         return () => {
             document.removeEventListener('click', handleClick);
-            document.removeEventListener('contextmenu', handleContext);
+            document.removeEventListener('contextmenu', handleContextMenu);
         };
-    }, [target]);
+    }, [target, handleContextMenu]);
 
     if (!target) return null;
 
@@ -184,10 +200,11 @@ const ContextMenuHost: React.FC = () => {
             <Portal>
                 <div
                     ref={menuRef}
+                    onContextMenu={(e) => e.preventDefault()}
                     style={{
                         position: 'fixed',
-                        left: `${Math.round(posX - 192)}px`,
-                        top: `${posY}px`,
+                        left: `${Math.max(4, Math.min(posX - 192, window.innerWidth - 196))}px`,
+                        top: `${Math.max(4, Math.min(posY, window.innerHeight - 48))}px`,
                         width: '12rem',
                         zIndex: 9999,
                     }}
