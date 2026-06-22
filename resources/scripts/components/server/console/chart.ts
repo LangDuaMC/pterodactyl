@@ -76,7 +76,12 @@ function deepMerge<T extends Record<string, any>>(a: T, b: DeepPartial<T>, merge
         if (val === undefined) continue;
         if (Array.isArray(val) && Array.isArray((a as any)[key])) {
             result[key as keyof T] = (mergeArrays ? (a as any)[key].concat(val) : val) as any;
-        } else if (val !== null && typeof val === 'object' && !Array.isArray(val) && typeof (a as any)[key] === 'object') {
+        } else if (
+            val !== null &&
+            typeof val === 'object' &&
+            !Array.isArray(val) &&
+            typeof (a as any)[key] === 'object'
+        ) {
             result[key as keyof T] = deepMerge((a as any)[key], val, mergeArrays);
         } else {
             result[key as keyof T] = val as any;
@@ -109,8 +114,8 @@ function getEmptyData(label: string, sets = 1, callback?: ChartDatasetCallback |
                         borderColor: theme('colors.cyan.400'),
                         backgroundColor: hexToRgba(theme('colors.cyan.700'), 0.5),
                     },
-                    index
-                )
+                    index,
+                ),
             ),
     };
 }
@@ -125,7 +130,7 @@ interface UseChartOptions {
 
 function useChart(label: string, opts?: UseChartOptions) {
     const options = getOptions(
-        typeof opts?.options === 'number' ? { scales: { y: { min: 0, suggestedMax: opts.options } } } : opts?.options
+        typeof opts?.options === 'number' ? { scales: { y: { min: 0, suggestedMax: opts.options } } } : opts?.options,
     );
     const [data, setData] = useState(getEmptyData(label, opts?.sets || 1, opts?.callback));
 
@@ -138,7 +143,7 @@ function useChart(label: string, opts?: UseChartOptions) {
                         .slice(1)
                         .concat(typeof item === 'number' ? Number(item.toFixed(2)) : item),
                 })),
-            })
+            }),
         );
 
     const clear = () =>
@@ -148,7 +153,7 @@ function useChart(label: string, opts?: UseChartOptions) {
                     ...value,
                     data: Array(20).fill(-5),
                 })),
-            })
+            }),
         );
 
     return { props: { data, options }, push, clear };

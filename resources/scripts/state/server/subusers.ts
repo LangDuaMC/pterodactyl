@@ -58,23 +58,21 @@ const subusers: ServerSubuserStore = {
 
     appendSubuser: action((state, payload) => {
         let matched = false;
-        state.data = [
-            ...state.data
-                .map((user) => {
-                    if (user.uuid === payload.uuid) {
-                        matched = true;
+        state.data = state.data
+            .map((user) => {
+                if (user.uuid === payload.uuid) {
+                    matched = true;
 
-                        return payload;
-                    }
+                    return payload;
+                }
 
-                    return user;
-                })
-                .concat(matched ? [] : [payload]),
-        ];
+                return user;
+            })
+            .concat(matched ? [] : [payload]);
     }),
 
     removeSubuser: action((state, payload) => {
-        state.data = [...state.data.filter((user) => user.uuid !== payload)];
+        state.data = state.data.filter((user) => user.uuid !== payload);
     }),
 };
 

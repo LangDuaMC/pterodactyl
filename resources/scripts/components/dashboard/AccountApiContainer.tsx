@@ -36,7 +36,7 @@ export default () => {
 
         clearAndAddHttpError();
         deleteApiKey(identifier)
-            .then(() => setKeys((s) => [...(s || []).filter((key) => key.identifier !== identifier)]))
+            .then(() => setKeys((s) => (s || []).filter((key) => key.identifier !== identifier)))
             .catch((error) => clearAndAddHttpError(error))
             .then(() => {
                 setLoading(false);
@@ -95,7 +95,7 @@ export default () => {
                     )}
                 </ContentBox>
             </div>
-        <AfterContent />
+            <AfterContent />
         </PageContentBlock>
     );
 };

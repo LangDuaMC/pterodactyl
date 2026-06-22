@@ -24,7 +24,7 @@ const databases: ServerDatabaseStore = {
     }),
 
     removeDatabase: action((state, payload) => {
-        state.data = [...state.data.filter((database) => database.id !== payload)];
+        state.data = state.data.filter((database) => database.id !== payload);
     }),
 };
 

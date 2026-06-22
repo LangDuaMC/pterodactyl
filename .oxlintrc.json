@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "eqeqeq": "error",
+    "no-use-before-define": "off",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "ban-ts-comment": ["error", { "ts-expect-error": "allow-with-description" }]
+  }
+}

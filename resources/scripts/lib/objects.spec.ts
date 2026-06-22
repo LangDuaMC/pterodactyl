@@ -12,11 +12,22 @@ describe('@/lib/objects.ts', function () {
             expect(isObject(null)).toBe(false);
         });
 
-        it.each([undefined, 123, 'foobar', () => ({}), Function, String(123), isObject, () => null, [], [1, 2, 3]])(
-            'should return false for %p',
-            function (value) {
+        const truthyCases = [
+            undefined,
+            123,
+            'foobar',
+            () => ({}),
+            Function,
+            String(123),
+            isObject,
+            () => null,
+            [],
+            [1, 2, 3],
+        ];
+        truthyCases.forEach((value) => {
+            it('should return false for ' + String(value), () => {
                 expect(isObject(value)).toBe(false);
-            }
-        );
+            });
+        });
     });
 });

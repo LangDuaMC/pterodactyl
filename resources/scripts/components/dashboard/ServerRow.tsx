@@ -25,7 +25,7 @@ const Icon = memo(
     styled(FontAwesomeIcon)<{ $alarm: boolean }>`
         ${(props) => (props.$alarm ? tw`text-red-400` : tw`text-neutral-500`)};
     `,
-    isEqual
+    isEqual,
 );
 
 const IconDescription = styled.p<{ $alarm: boolean }>`
@@ -44,8 +44,8 @@ const StatusIndicatorBox = styled(GreyRowBox)<{ $status: ServerPowerState | unde
             !$status || $status === 'offline'
                 ? tw`bg-red-500`
                 : $status === 'running'
-                ? tw`bg-green-500`
-                : tw`bg-yellow-500`};
+                  ? tw`bg-green-500`
+                  : tw`bg-yellow-500`};
     }
 
     &:hover .status-bar {
@@ -147,10 +147,10 @@ export default ({ server, className }: { server: Server; className?: string }) =
                                 {server.isTransferring
                                     ? 'Transferring'
                                     : server.status === 'installing'
-                                    ? 'Installing'
-                                    : server.status === 'restoring_backup'
-                                    ? 'Restoring Backup'
-                                    : 'Unavailable'}
+                                      ? 'Installing'
+                                      : server.status === 'restoring_backup'
+                                        ? 'Restoring Backup'
+                                        : 'Unavailable'}
                             </span>
                         </div>
                     ) : (

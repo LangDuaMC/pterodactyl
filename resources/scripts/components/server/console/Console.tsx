@@ -90,7 +90,7 @@ export default () => {
 
     const handleDaemonErrorOutput = (line: string) =>
         terminal.writeln(
-            TERMINAL_PRELUDE + '\u001b[1m\u001b[41m' + line.replace(/(?:\r\n|\r|\n)$/im, '') + '\u001b[0m'
+            TERMINAL_PRELUDE + '\u001b[1m\u001b[41m' + line.replace(/(?:\r\n|\r|\n)$/im, '') + '\u001b[0m',
         );
 
     const handlePowerChangeEvent = (state: string) =>
@@ -165,7 +165,7 @@ export default () => {
             if (terminal.element) {
                 fitAddon.fit();
             }
-        }, 100)
+        }, 100),
     );
 
     useEffect(() => {
@@ -225,7 +225,7 @@ export default () => {
                     <div
                         className={classNames(
                             'text-gray-100 peer-focus:text-gray-50 peer-focus:animate-pulse',
-                            styles.command_icon
+                            styles.command_icon,
                         )}
                     >
                         <ChevronDoubleRightIcon className={'w-4 h-4'} />

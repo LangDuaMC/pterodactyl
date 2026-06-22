@@ -24,7 +24,7 @@ const schedules: ServerScheduleStore = {
     }),
 
     removeSchedule: action((state, payload) => {
-        state.data = [...state.data.filter((schedule) => schedule.id !== payload)];
+        state.data = state.data.filter((schedule) => schedule.id !== payload);
     }),
 };
 

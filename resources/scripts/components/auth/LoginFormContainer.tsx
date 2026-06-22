@@ -47,8 +47,7 @@ export default forwardRef<HTMLFormElement, Props>(({ title, ...props }, ref) => 
         </Form>
         <AfterContent />
         <p css={tw`text-center text-neutral-500 text-xs mt-4`}>
-            Pterodactyl&reg;
-            &copy; 2015 - {new Date().getFullYear()}&nbsp;
+            Pterodactyl&reg; &copy; 2015 - {new Date().getFullYear()}&nbsp;
             <Attribution />
             <a
                 rel={'noopener nofollow noreferrer'}

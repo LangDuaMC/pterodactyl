@@ -23,10 +23,7 @@ const Clickable: React.FC<{ file: FileObject; onOpenFile?: (path: string, name: 
 
         const match = useRouteMatch();
 
-        const canClick =
-            file.isFile
-                ? file.isEditable() && canReadContents
-                : canRead;
+        const canClick = file.isFile ? file.isEditable() && canReadContents : canRead;
 
         if (!canClick) {
             return <div className={styles.details}>{children}</div>;
@@ -56,7 +53,13 @@ const Clickable: React.FC<{ file: FileObject; onOpenFile?: (path: string, name: 
     isEqual,
 );
 
-const FileObjectRow = ({ file, onOpenFile }: { file: FileObject; onOpenFile?: (path: string, name: string) => void }) => (
+const FileObjectRow = ({
+    file,
+    onOpenFile,
+}: {
+    file: FileObject;
+    onOpenFile?: (path: string, name: string) => void;
+}) => (
     <div
         className={styles.file_row}
         key={file.name}

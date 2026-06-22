@@ -145,10 +145,7 @@ export default () => {
             <ErrorBoundary>
                 <BeforeContent />
                 <div css={tw`flex gap-2`} style={{ minHeight: 'calc(100vh - 14rem)' }}>
-                    <div
-                        css={tw`flex-shrink-0 bg-neutral-800 rounded overflow-hidden`}
-                        style={{ width: '240px' }}
-                    >
+                    <div css={tw`flex-shrink-0 bg-neutral-800 rounded overflow-hidden`} style={{ width: '240px' }}>
                         <div css={tw`px-2 py-1.5 text-xs font-medium text-neutral-300 border-b border-neutral-700`}>
                             Files
                         </div>
@@ -161,9 +158,7 @@ export default () => {
                                     <FileActionCheckbox
                                         type={'checkbox'}
                                         css={tw`mx-4`}
-                                        checked={
-                                            selectedFilesLength === (files?.length === 0 ? -1 : files?.length)
-                                        }
+                                        checked={selectedFilesLength === (files?.length === 0 ? -1 : files?.length)}
                                         onChange={onSelectAllClick}
                                     />
                                 }
@@ -185,7 +180,9 @@ export default () => {
                                 <EditorTabBar />
                                 <div css={tw`bg-neutral-800 rounded-b border-t border-neutral-700 relative`}>
                                     {editorLoading && (
-                                        <div css={tw`absolute inset-0 z-10 flex items-center justify-center bg-neutral-800 bg-opacity-75`}>
+                                        <div
+                                            css={tw`absolute inset-0 z-10 flex items-center justify-center bg-neutral-800 bg-opacity-75`}
+                                        >
                                             <Spinner size={'small'} />
                                         </div>
                                     )}

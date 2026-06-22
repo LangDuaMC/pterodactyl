@@ -30,7 +30,9 @@ export class Websocket {
     }
 
     private emit(event: string, ...args: any[]) {
-        this.listeners.get(event)?.forEach((fn) => { fn(...args); });
+        this.listeners.get(event)?.forEach((fn) => {
+            fn(...args);
+        });
     }
 
     connect(url: string): this {
