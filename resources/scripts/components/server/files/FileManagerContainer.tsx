@@ -6,7 +6,7 @@ import FileObjectRow from '@/components/server/files/FileObjectRow';
 import FileManagerBreadcrumbs from '@/components/server/files/FileManagerBreadcrumbs';
 import { FileObject } from '@/api/server/files/loadDirectory';
 import NewDirectoryButton from '@/components/server/files/NewDirectoryButton';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import Can from '@/components/elements/Can';
 import { ServerError } from '@/components/elements/ScreenBlock';
 import tw from 'twin.macro';
@@ -20,16 +20,14 @@ import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import { useStoreActions } from '@/state/hooks';
 import ErrorBoundary from '@/components/elements/ErrorBoundary';
 import { FileActionCheckbox } from '@/components/server/files/SelectFileCheckbox';
-import { hashToPath } from '@/helpers';
 import getFileContents from '@/api/server/files/getFileContents';
 import saveFileContents from '@/api/server/files/saveFileContents';
 import CodemirrorEditor from '@/components/elements/CodemirrorEditor';
 import FileTree from '@/components/server/files/FileTree';
-import EditorTabBar from '@/components/server/files/EditorTabBar';
+import TabBar from '@/components/server/files/TabBar';
 import Select from '@/components/elements/Select';
 import modes from '@/modes';
-import { encodePathSegments } from '@/helpers';
-import style from './style.module.css';
+import { encodePathSegments, hashToPath } from '@/helpers';
 
 import BeforeContent from '@blueprint/components/Server/Files/Browse/BeforeContent';
 import FileButtons from '@blueprint/components/Server/Files/Browse/FileButtons';
@@ -68,19 +66,17 @@ const findModeByPath = (path: string): string => {
 export default () => {
     const id = ServerContext.useStoreState((state) => state.server.data!.id);
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
-    const { hash } = useLocation();
     const { data: files, error, mutate } = useFileManagerSwr();
     const directory = ServerContext.useStoreState((state) => state.files.directory);
+    const tabs = ServerContext.useStoreState((state) => state.files.tabs);
+    const activeTabId = ServerContext.useStoreState((state) => state.files.activeTabId);
     const clearFlashes = useStoreActions((actions) => actions.flashes.clearFlashes);
-    const setDirectory = ServerContext.useStoreActions((actions) => actions.files.setDirectory);
 
     const setSelectedFiles = ServerContext.useStoreActions((actions) => actions.files.setSelectedFiles);
+    const setDirectory = ServerContext.useStoreActions((actions) => actions.files.setDirectory);
     const selectedFilesLength = ServerContext.useStoreState((state) => state.files.selectedFiles.length);
-
-    const editorTabs = ServerContext.useStoreState((s) => s.files.editorTabs);
-    const activeTab = ServerContext.useStoreState((s) => s.files.activeTab);
+    const openBrowserTab = ServerContext.useStoreActions((a) => a.files.openBrowserTab);
     const openEditorTab = ServerContext.useStoreActions((a) => a.files.openEditorTab);
-    const closeEditorTab = ServerContext.useStoreActions((a) => a.files.closeEditorTab);
     const setActiveTab = ServerContext.useStoreActions((a) => a.files.setActiveTab);
 
     const [editorContent, setEditorContent] = useState('');
@@ -89,15 +85,17 @@ export default () => {
     const [saving, setSaving] = useState(false);
     const fetchFileContentRef = useRef<(() => Promise<string>) | null>(null);
 
+    const skipHashSync = useRef(false);
+    const hashSynced = useRef(false);
+
     useEffect(() => {
         clearFlashes('files');
         setSelectedFiles([]);
-        setDirectory(hashToPath(hash));
-    }, [hash]);
+    }, [tabs]);
 
     useEffect(() => {
-        mutate();
-    }, [directory]);
+        setDirectory(hashToPath(window.location.hash));
+    }, []);
 
     const onSelectAllClick = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSelectedFiles(e.currentTarget.checked ? files?.map((file) => file.name) || [] : []);
@@ -111,34 +109,31 @@ export default () => {
         [openEditorTab],
     );
 
-    useEffect(() => {
-        if (!activeTab) return;
-        const tab = editorTabs.find((t) => t.path === activeTab);
-        if (!tab) return;
+    const activeTab = tabs.find((t) => t.id === activeTabId) || null;
 
-        setEditorMode(tab.mode);
+    useEffect(() => {
+        if (activeTab?.type !== 'editor') return;
+        const tab = activeTab;
+
+        setEditorMode(tab.mode || 'text/plain');
         setEditorLoading(true);
-        getFileContents(uuid, activeTab)
+        getFileContents(uuid, tab.path)
             .then(setEditorContent)
             .catch(() => setEditorContent(''))
             .finally(() => setEditorLoading(false));
-    }, [activeTab, editorTabs.length]);
+    }, [activeTab?.id, activeTab?.type]);
 
     const save = useCallback(() => {
-        if (!activeTab || !fetchFileContentRef.current) return;
+        if (!activeTab || activeTab.type !== 'editor' || !fetchFileContentRef.current) return;
         setSaving(true);
         fetchFileContentRef
             .current()
-            .then((content) => saveFileContents(uuid, activeTab, content))
+            .then((content) => saveFileContents(uuid, activeTab.path, content))
             .catch(() => {})
             .finally(() => setSaving(false));
-    }, [uuid, activeTab]);
+    }, [uuid, activeTab?.id, activeTab?.type]);
 
-    if (error) {
-        return <ServerError message={httpErrorToHuman(error)} onRetry={() => mutate()} />;
-    }
-
-    const showEditor = activeTab && editorTabs.length > 0;
+    const showEditor = activeTab?.type === 'editor';
 
     return (
         <ServerContentBlock title={'File Manager'} showFlashKey={'files'}>
@@ -152,32 +147,74 @@ export default () => {
                         <FileTree onOpenFile={openFile} />
                     </div>
                     <div css={tw`flex-1 flex flex-col min-w-0`}>
-                        <div className={'flex flex-wrap-reverse md:flex-nowrap mb-4'}>
-                            <FileManagerBreadcrumbs
-                                renderLeft={
-                                    <FileActionCheckbox
-                                        type={'checkbox'}
-                                        css={tw`mx-4`}
-                                        checked={selectedFilesLength === (files?.length === 0 ? -1 : files?.length)}
-                                        onChange={onSelectAllClick}
+                        <TabBar />
+                        {activeTab?.type === 'browser' ? (
+                            <>
+                                <div className={'flex flex-wrap-reverse md:flex-nowrap mb-4'}>
+                                    <FileManagerBreadcrumbs
+                                        renderLeft={
+                                            <FileActionCheckbox
+                                                type={'checkbox'}
+                                                css={tw`mx-4`}
+                                                checked={
+                                                    selectedFilesLength ===
+                                                    (files?.length === 0 ? -1 : files?.length)
+                                                }
+                                                onChange={onSelectAllClick}
+                                            />
+                                        }
                                     />
-                                }
-                            />
-                            <Can action={'file.create'}>
-                                <div className={style.manager_actions}>
-                                    <FileManagerStatus />
-                                    <FileButtons />
-                                    <NewDirectoryButton />
-                                    <UploadButton />
-                                    <NavLink to={`/server/${id}/files/new${window.location.hash}`}>
-                                        <Button>New File</Button>
-                                    </NavLink>
+                                    <Can action={'file.create'}>
+                                        <div className={'grid grid-cols-2 sm:grid-cols-3 w-full gap-4 mb-4 md:flex md:flex-1 md:justify-end md:mb-0'}>
+                                            <FileManagerStatus />
+                                            <FileButtons />
+                                            <NewDirectoryButton />
+                                            <UploadButton />
+                                            <NavLink to={`/server/${id}/files/new#${encodePathSegments(directory)}`}>
+                                                <Button>New File</Button>
+                                            </NavLink>
+                                        </div>
+                                    </Can>
                                 </div>
-                            </Can>
-                        </div>
-                        {showEditor && (
-                            <div css={tw`mb-4`}>
-                                <EditorTabBar />
+                                {!files ? (
+                                    <Spinner size={'large'} centered />
+                                ) : (
+                                    <>
+                                        {!files.length ? (
+                                            <p css={tw`text-sm text-neutral-400 text-center`}>
+                                                This directory seems to be empty.
+                                            </p>
+                                        ) : (
+                                            <CSSTransition classNames={'fade'} timeout={150} appear in>
+                                                <div>
+                                                    {files.length > 250 && (
+                                                        <div css={tw`rounded bg-yellow-400 mb-px p-3`}>
+                                                            <p css={tw`text-yellow-900 text-sm text-center`}>
+                                                                This directory is too large to display in the browser,
+                                                                limiting the output to the first 250 files.
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                    {sortFiles(files.slice(0, 250)).map((file) => (
+                                                        <FileObjectRow
+                                                            key={file.key}
+                                                            file={file}
+                                                            onOpenFile={
+                                                                file.isFile && file.isEditable()
+                                                                    ? (p, n) => openFile(p, n)
+                                                                    : undefined
+                                                            }
+                                                        />
+                                                    ))}
+                                                    <MassActionsBar />
+                                                </div>
+                                            </CSSTransition>
+                                        )}
+                                    </>
+                                )}
+                            </>
+                        ) : showEditor ? (
+                            <div>
                                 <div css={tw`bg-neutral-800 rounded-b border-t border-neutral-700 relative`}>
                                     {editorLoading && (
                                         <div
@@ -188,7 +225,7 @@ export default () => {
                                     )}
                                     <CodemirrorEditor
                                         mode={editorMode}
-                                        filename={activeTab || ''}
+                                        filename={activeTab?.path || ''}
                                         onModeChanged={setEditorMode}
                                         initialContent={editorContent}
                                         fetchContent={(value) => {
@@ -217,42 +254,8 @@ export default () => {
                                     </div>
                                 </div>
                             </div>
-                        )}
-                        {!files ? (
-                            <Spinner size={'large'} centered />
                         ) : (
-                            <>
-                                {!files.length ? (
-                                    <p css={tw`text-sm text-neutral-400 text-center`}>
-                                        This directory seems to be empty.
-                                    </p>
-                                ) : (
-                                    <CSSTransition classNames={'fade'} timeout={150} appear in>
-                                        <div>
-                                            {files.length > 250 && (
-                                                <div css={tw`rounded bg-yellow-400 mb-px p-3`}>
-                                                    <p css={tw`text-yellow-900 text-sm text-center`}>
-                                                        This directory is too large to display in the browser, limiting
-                                                        the output to the first 250 files.
-                                                    </p>
-                                                </div>
-                                            )}
-                                            {sortFiles(files.slice(0, 250)).map((file) => (
-                                                <FileObjectRow
-                                                    key={file.key}
-                                                    file={file}
-                                                    onOpenFile={
-                                                        file.isFile && file.isEditable()
-                                                            ? (p, n) => openFile(p, n)
-                                                            : undefined
-                                                    }
-                                                />
-                                            ))}
-                                            <MassActionsBar />
-                                        </div>
-                                    </CSSTransition>
-                                )}
-                            </>
+                            <Spinner size={'large'} centered />
                         )}
                     </div>
                 </div>

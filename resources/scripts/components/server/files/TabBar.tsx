@@ -1,8 +1,7 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faFolder, faFileAlt } from '@fortawesome/free-solid-svg-icons';
 import { ServerContext } from '@/state/server';
-import { encodePathSegments } from '@/helpers';
 import tw from 'twin.macro';
 import styled from 'styled-components/macro';
 
@@ -29,12 +28,11 @@ const CloseButton = styled.span`
     ${tw`ml-1 p-0.5 rounded hover:bg-neutral-600 text-neutral-500 hover:text-neutral-200 leading-none`}
 `;
 
-const EditorTabBar: React.FC = () => {
-    const tabs = ServerContext.useStoreState((s) => s.files.editorTabs);
-    const activeTab = ServerContext.useStoreState((s) => s.files.activeTab);
-    const closeTab = ServerContext.useStoreActions((a) => a.files.closeEditorTab);
+const TabBar: React.FC = () => {
+    const tabs = ServerContext.useStoreState((s) => s.files.tabs);
+    const activeTabId = ServerContext.useStoreState((s) => s.files.activeTabId);
+    const closeTab = ServerContext.useStoreActions((a) => a.files.closeTab);
     const setActiveTab = ServerContext.useStoreActions((a) => a.files.setActiveTab);
-    const id = ServerContext.useStoreState((s) => s.server.data!.id);
 
     if (tabs.length === 0) return null;
 
@@ -42,19 +40,24 @@ const EditorTabBar: React.FC = () => {
         <TabBarContainer>
             {tabs.map((tab) => (
                 <Tab
-                    key={tab.path}
-                    active={activeTab === tab.path}
+                    key={tab.id}
+                    active={activeTabId === tab.id}
                     onClick={() => {
-                        setActiveTab(tab.path);
+                        setActiveTab(tab.id);
                     }}
                 >
+                    <FontAwesomeIcon
+                        icon={tab.type === 'browser' ? faFolder : faFileAlt}
+                        size='xs'
+                        css={tw`flex-shrink-0`}
+                    />
                     <span css={tw`truncate`} style={{ maxWidth: '8rem' }}>
                         {tab.name}
                     </span>
                     <CloseButton
                         onClick={(e) => {
                             e.stopPropagation();
-                            closeTab(tab.path);
+                            closeTab(tab.id);
                         }}
                     >
                         <FontAwesomeIcon icon={faTimes} size='xs' />
@@ -65,4 +68,4 @@ const EditorTabBar: React.FC = () => {
     );
 };
 
-export default EditorTabBar;
+export default TabBar;

@@ -56,7 +56,14 @@ const Row = ({ icon, title, ...props }: RowProps) => (
     </StyledRow>
 );
 
-const FileDropdownMenu = ({ file }: { file: FileObject }) => {
+interface Props {
+    file: FileObject;
+    noToggle?: boolean;
+    isRoot?: boolean;
+    children?: React.ReactNode;
+}
+
+const FileDropdownMenu = ({ file, noToggle, isRoot, children }: Props) => {
     const onClickRef = useRef<DropdownMenu>(null);
     const [showSpinner, setShowSpinner] = useState(false);
     const [modal, setModal] = useState<ModalType | null>(null);
@@ -69,15 +76,13 @@ const FileDropdownMenu = ({ file }: { file: FileObject }) => {
 
     useEventListener(`pterodactyl:files:ctx:${file.key}`, (e: CustomEvent) => {
         if (onClickRef.current) {
-            onClickRef.current.triggerMenu(e.detail);
+            onClickRef.current.triggerMenu(e.detail, true);
         }
     });
 
     const doDeletion = () => {
         clearFlashes('files');
 
-        // For UI speed, immediately remove the file from the listing before calling the deletion function.
-        // If the delete actually fails, we'll fetch the current directory contents again automatically.
         mutate((files) => files.filter((f) => f.key !== file.key), false);
 
         deleteFiles(uuid, directory, [file.name]).catch((error) => {
@@ -129,6 +134,9 @@ const FileDropdownMenu = ({ file }: { file: FileObject }) => {
             .then(() => setShowSpinner(false));
     };
 
+    const showToggle = !noToggle;
+    const showMenuItems = !isRoot;
+
     return (
         <>
             <Dialog.Confirm
@@ -143,54 +151,63 @@ const FileDropdownMenu = ({ file }: { file: FileObject }) => {
             </Dialog.Confirm>
             <DropdownMenu
                 ref={onClickRef}
-                renderToggle={(onClick) => (
-                    <div css={tw`px-4 py-2 hover:text-white`} onClick={onClick}>
-                        <FontAwesomeIcon icon={faEllipsisH} />
-                        {modal ? (
-                            modal === 'chmod' ? (
-                                <ChmodFileModal
-                                    visible
-                                    appear
-                                    files={[{ file: file.name, mode: file.modeBits }]}
-                                    onDismissed={() => setModal(null)}
-                                />
-                            ) : (
-                                <RenameFileModal
-                                    visible
-                                    appear
-                                    files={[file.name]}
-                                    useMoveTerminology={modal === 'move'}
-                                    onDismissed={() => setModal(null)}
-                                />
-                            )
-                        ) : null}
-                        <SpinnerOverlay visible={showSpinner} fixed size={'large'} />
-                    </div>
-                )}
+                renderToggle={(onClick) =>
+                    showToggle ? (
+                        <div css={tw`px-4 py-2 hover:text-white`} onClick={onClick}>
+                            <FontAwesomeIcon icon={faEllipsisH} />
+                            {children}
+                            {modal ? (
+                                modal === 'chmod' ? (
+                                    <ChmodFileModal
+                                        visible
+                                        appear
+                                        files={[{ file: file.name, mode: file.modeBits }]}
+                                        onDismissed={() => setModal(null)}
+                                    />
+                                ) : (
+                                    <RenameFileModal
+                                        visible
+                                        appear
+                                        files={[file.name]}
+                                        useMoveTerminology={modal === 'move'}
+                                        onDismissed={() => setModal(null)}
+                                    />
+                                )
+                            ) : null}
+                            <SpinnerOverlay visible={showSpinner} fixed size={'large'} />
+                        </div>
+                    ) : (
+                        <>{children}</>
+                    )
+                }
             >
-                <Can action={'file.update'}>
-                    <Row onClick={() => setModal('rename')} icon={faPencilAlt} title={'Rename'} />
-                    <Row onClick={() => setModal('move')} icon={faLevelUpAlt} title={'Move'} />
-                    <Row onClick={() => setModal('chmod')} icon={faFileCode} title={'Permissions'} />
-                </Can>
-                {file.isFile && (
-                    <Can action={'file.create'}>
-                        <Row onClick={doCopy} icon={faCopy} title={'Copy'} />
-                    </Can>
-                )}
-                {file.isArchiveType() ? (
-                    <Can action={'file.create'}>
-                        <Row onClick={doUnarchive} icon={faBoxOpen} title={'Unarchive'} />
-                    </Can>
-                ) : (
-                    <Can action={'file.archive'}>
-                        <Row onClick={doArchive} icon={faFileArchive} title={'Archive'} />
-                    </Can>
-                )}
-                {file.isFile && <Row onClick={doDownload} icon={faFileDownload} title={'Download'} />}
-                <Can action={'file.delete'}>
-                    <Row onClick={() => setShowConfirmation(true)} icon={faTrashAlt} title={'Delete'} $danger />
-                </Can>
+                {showMenuItems ? (
+                    <>
+                        <Can action={'file.update'}>
+                            <Row onClick={() => setModal('rename')} icon={faPencilAlt} title={'Rename'} />
+                            <Row onClick={() => setModal('move')} icon={faLevelUpAlt} title={'Move'} />
+                            <Row onClick={() => setModal('chmod')} icon={faFileCode} title={'Permissions'} />
+                        </Can>
+                        {file.isFile && (
+                            <Can action={'file.create'}>
+                                <Row onClick={doCopy} icon={faCopy} title={'Copy'} />
+                            </Can>
+                        )}
+                        {file.isArchiveType() ? (
+                            <Can action={'file.create'}>
+                                <Row onClick={doUnarchive} icon={faBoxOpen} title={'Unarchive'} />
+                            </Can>
+                        ) : (
+                            <Can action={'file.archive'}>
+                                <Row onClick={doArchive} icon={faFileArchive} title={'Archive'} />
+                            </Can>
+                        )}
+                        {file.isFile && <Row onClick={doDownload} icon={faFileDownload} title={'Download'} />}
+                        <Can action={'file.delete'}>
+                            <Row onClick={() => setShowConfirmation(true)} icon={faTrashAlt} title={'Delete'} $danger />
+                        </Can>
+                    </>
+                ) : null}
                 <DropdownItems />
             </DropdownMenu>
         </>

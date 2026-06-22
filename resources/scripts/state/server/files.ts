@@ -1,5 +1,4 @@
 import { action, Action } from 'easy-peasy';
-import { cleanDirectoryPath } from '@/helpers';
 
 export interface FileUploadData {
     loaded: number;
@@ -7,18 +6,20 @@ export interface FileUploadData {
     readonly total: number;
 }
 
-export interface EditorTab {
+export interface Tab {
+    id: string;
+    type: 'browser' | 'editor';
     path: string;
     name: string;
-    mode: string;
+    mode?: string;
 }
 
 export interface ServerFileStore {
+    tabs: Tab[];
+    activeTabId: string | null;
     directory: string;
     selectedFiles: string[];
     uploads: Record<string, FileUploadData>;
-    editorTabs: EditorTab[];
-    activeTab: string | null;
 
     setDirectory: Action<ServerFileStore, string>;
     setSelectedFiles: Action<ServerFileStore, string[]>;
@@ -31,20 +32,27 @@ export interface ServerFileStore {
     removeFileUpload: Action<ServerFileStore, string>;
     cancelFileUpload: Action<ServerFileStore, string>;
 
-    openEditorTab: Action<ServerFileStore, EditorTab>;
-    closeEditorTab: Action<ServerFileStore, string>;
-    setActiveTab: Action<ServerFileStore, string | null>;
+    openBrowserTab: Action<ServerFileStore, string>;
+    openEditorTab: Action<ServerFileStore, { path: string; name: string; mode: string }>;
+    closeTab: Action<ServerFileStore, string>;
+    setActiveTab: Action<ServerFileStore, string>;
+    navigateBrowserTab: Action<ServerFileStore, string>;
 }
 
+const tabName = (path: string): string => {
+    if (path === '/' || !path) return '/';
+    return path.split('/').filter(Boolean).pop() || path;
+};
+
 const files: ServerFileStore = {
+    tabs: [],
+    activeTabId: null,
     directory: '/',
     selectedFiles: [],
     uploads: {},
-    editorTabs: [],
-    activeTab: null,
 
     setDirectory: action((state, payload) => {
-        state.directory = cleanDirectoryPath(payload);
+        state.directory = payload;
     }),
 
     setSelectedFiles: action((state, payload) => {
@@ -59,12 +67,6 @@ const files: ServerFileStore = {
         state.selectedFiles = state.selectedFiles.filter((f) => f !== payload);
     }),
 
-    clearFileUploads: action((state) => {
-        Object.values(state.uploads).forEach((upload) => upload.abort.abort());
-
-        state.uploads = {};
-    }),
-
     pushFileUpload: action((state, payload) => {
         state.uploads[payload.name] = payload.data;
     }),
@@ -73,6 +75,14 @@ const files: ServerFileStore = {
         if (state.uploads[name]) {
             state.uploads[name].loaded = loaded;
         }
+    }),
+
+    clearFileUploads: action((state) => {
+        for (const upload of Object.values(state.uploads)) {
+            upload.abort.abort();
+        }
+
+        state.uploads = {};
     }),
 
     removeFileUpload: action((state, payload) => {
@@ -89,31 +99,74 @@ const files: ServerFileStore = {
         }
     }),
 
-    openEditorTab: action((state, payload) => {
-        const exists = state.editorTabs.find((t) => t.path === payload.path);
-        if (!exists) {
-            state.editorTabs = [...state.editorTabs, payload];
+    openBrowserTab: action((state, path) => {
+        const id = `browser:${path}`;
+        const existing = state.tabs.find((t) => t.id === id);
+        if (existing) {
+            state.activeTabId = existing.id;
+            state.directory = existing.path;
+            return;
         }
-        state.activeTab = payload.path;
+
+        state.tabs = [...state.tabs, { id, type: 'browser', path, name: tabName(path) }];
+        state.activeTabId = id;
+        state.directory = path;
     }),
 
-    closeEditorTab: action((state, path) => {
-        const idx = state.editorTabs.findIndex((t) => t.path === path);
-        if (idx === -1) return;
+    openEditorTab: action((state, { path, name, mode }) => {
+        const id = `editor:${path}`;
+        const existing = state.tabs.find((t) => t.id === id);
+        if (existing) {
+            state.activeTabId = existing.id;
+            return;
+        }
 
-        state.editorTabs = state.editorTabs.filter((t) => t.path !== path);
+        state.tabs = [...state.tabs, { id, type: 'editor', path, name, mode }];
+        state.activeTabId = id;
+    }),
 
-        if (state.activeTab === path) {
-            if (state.editorTabs.length > 0) {
-                state.activeTab = state.editorTabs[Math.min(idx, state.editorTabs.length - 1)].path;
+    closeTab: action((state, tabId) => {
+        const tab = state.tabs.find((t) => t.id === tabId);
+        if (!tab) return;
+
+        const browserCount = state.tabs.filter((t) => t.type === 'browser').length;
+        if (tab.type === 'browser' && browserCount <= 1) return;
+
+        const idx = state.tabs.findIndex((t) => t.id === tabId);
+        state.tabs = state.tabs.filter((t) => t.id !== tabId);
+
+        if (state.activeTabId === tabId) {
+            if (state.tabs.length > 0) {
+                const nextTab = state.tabs[Math.min(idx, state.tabs.length - 1)];
+                state.activeTabId = nextTab.id;
+                if (nextTab.type === 'browser') {
+                    state.directory = nextTab.path;
+                }
             } else {
-                state.activeTab = null;
+                state.activeTabId = null;
             }
         }
     }),
 
-    setActiveTab: action((state, payload) => {
-        state.activeTab = payload;
+    setActiveTab: action((state, tabId) => {
+        state.activeTabId = tabId;
+        const tab = state.tabs.find((t) => t.id === tabId);
+        if (tab?.type === 'browser') {
+            state.directory = tab.path;
+        }
+    }),
+
+    navigateBrowserTab: action((state, path) => {
+        const active = state.tabs.find((t) => t.id === state.activeTabId);
+        if (!active || active.type !== 'browser') return;
+
+        const newId = `browser:${path}`;
+        const name = tabName(path);
+        active.id = newId;
+        active.path = path;
+        active.name = name;
+        state.activeTabId = newId;
+        state.directory = path;
     }),
 };
 

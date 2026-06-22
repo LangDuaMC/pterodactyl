@@ -24,6 +24,8 @@ interface State {
 
 class DropdownMenu extends React.PureComponent<Props, State> {
     menu = createRef<HTMLDivElement>();
+    isContext = false;
+    listenerTimer: number | null = null;
 
     state: State = {
         posX: 0,
@@ -38,9 +40,11 @@ class DropdownMenu extends React.PureComponent<Props, State> {
         const menu = this.menu.current;
 
         if (this.state.visible && !prevState.visible && menu) {
-            document.addEventListener('click', this.windowListener);
-            document.addEventListener('contextmenu', this.contextMenuListener);
             menu.style.left = `${Math.round(this.state.posX - menu.clientWidth)}px`;
+            this.listenerTimer = window.setTimeout(() => {
+                document.addEventListener('click', this.windowListener);
+                document.addEventListener('contextmenu', this.contextMenuListener);
+            }, 0);
         }
 
         if (!this.state.visible && prevState.visible) {
@@ -49,16 +53,28 @@ class DropdownMenu extends React.PureComponent<Props, State> {
     }
 
     removeListeners = () => {
+        if (this.listenerTimer !== null) {
+            clearTimeout(this.listenerTimer);
+            this.listenerTimer = null;
+        }
         document.removeEventListener('click', this.windowListener);
         document.removeEventListener('contextmenu', this.contextMenuListener);
     };
 
     onClickHandler = (e: React.MouseEvent<any, MouseEvent>) => {
         e.preventDefault();
-        this.triggerMenu(e.clientX);
+        if (!this.state.visible) {
+            this.setState({ posX: e.clientX, visible: true });
+        }
     };
 
-    contextMenuListener = () => this.setState({ visible: false });
+    contextMenuListener = () => {
+        if (this.isContext) {
+            this.isContext = false;
+            return;
+        }
+        this.setState({ visible: false });
+    };
 
     windowListener = (e: MouseEvent) => {
         const menu = this.menu.current;
@@ -76,11 +92,12 @@ class DropdownMenu extends React.PureComponent<Props, State> {
         }
     };
 
-    triggerMenu = (posX: number) =>
-        this.setState((s) => ({
-            posX: !s.visible ? posX : s.posX,
-            visible: !s.visible,
-        }));
+    triggerMenu = (posX: number, fromContext = false) => {
+        if (!this.state.visible) {
+            this.isContext = fromContext;
+            this.setState({ posX, visible: true });
+        }
+    };
 
     render() {
         return (

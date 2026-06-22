@@ -1,27 +1,49 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileAlt, faFileArchive, faFileImport, faFolder } from '@fortawesome/free-solid-svg-icons';
-import { encodePathSegments } from '@/helpers';
 import { differenceInHours, format, formatDistanceToNow } from 'date-fns';
 import React, { memo } from 'react';
 import { FileObject } from '@/api/server/files/loadDirectory';
 import FileDropdownMenu from '@/components/server/files/FileDropdownMenu';
 import { ServerContext } from '@/state/server';
-import { NavLink, useRouteMatch } from 'react-router-dom';
 import tw from 'twin.macro';
 import isEqual from 'react-fast-compare';
 import SelectFileCheckbox from '@/components/server/files/SelectFileCheckbox';
 import { usePermissions } from '@/plugins/usePermissions';
 import { join } from 'pathe';
 import { bytesToString } from '@/lib/formatters';
+import modes from '@/modes';
 import styles from './style.module.css';
+
+const findModeByPath = (path: string): string => {
+    const filename = path.split('/').pop() || '';
+    for (let i = 0; i < modes.length; i++) {
+        const info = modes[i];
+        if (info.file && info.file.test(filename)) {
+            return info.mime;
+        }
+    }
+    const dot = filename.lastIndexOf('.');
+    const ext = dot > -1 ? filename.substring(dot + 1) : '';
+    if (ext) {
+        for (let i = 0; i < modes.length; i++) {
+            const info = modes[i];
+            if (info.ext) {
+                for (let j = 0; j < info.ext.length; j++) {
+                    if (info.ext[j] === ext) return info.mime;
+                }
+            }
+        }
+    }
+    return 'text/plain';
+};
 
 const Clickable: React.FC<{ file: FileObject; onOpenFile?: (path: string, name: string) => void }> = memo(
     ({ file, children, onOpenFile }) => {
         const [canRead] = usePermissions(['file.read']);
         const [canReadContents] = usePermissions(['file.read-content']);
         const directory = ServerContext.useStoreState((state) => state.files.directory);
-
-        const match = useRouteMatch();
+        const navigateBrowserTab = ServerContext.useStoreActions((a) => a.files.navigateBrowserTab);
+        const openEditorTab = ServerContext.useStoreActions((a) => a.files.openEditorTab);
 
         const canClick = file.isFile ? file.isEditable() && canReadContents : canRead;
 
@@ -34,7 +56,26 @@ const Clickable: React.FC<{ file: FileObject; onOpenFile?: (path: string, name: 
                 <div
                     className={styles.details}
                     style={{ cursor: 'pointer' }}
-                    onClick={() => onOpenFile(join(directory, file.name), file.name)}
+                    onClick={() => {
+                        const mode = findModeByPath(join(directory, file.name));
+                        openEditorTab({
+                            path: join(directory, file.name),
+                            name: file.name,
+                            mode,
+                        });
+                    }}
+                >
+                    {children}
+                </div>
+            );
+        }
+
+        if (!file.isFile) {
+            return (
+                <div
+                    className={styles.details}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => navigateBrowserTab(join(directory, file.name))}
                 >
                     {children}
                 </div>
@@ -42,12 +83,9 @@ const Clickable: React.FC<{ file: FileObject; onOpenFile?: (path: string, name: 
         }
 
         return (
-            <NavLink
-                className={styles.details}
-                to={`${match.url}${file.isFile ? '/edit' : ''}#${encodePathSegments(join(directory, file.name))}`}
-            >
+            <div className={styles.details}>
                 {children}
-            </NavLink>
+            </div>
         );
     },
     isEqual,
@@ -65,7 +103,10 @@ const FileObjectRow = ({
         key={file.name}
         onContextMenu={(e) => {
             e.preventDefault();
-            window.dispatchEvent(new CustomEvent(`pterodactyl:files:ctx:${file.key}`, { detail: e.clientX }));
+            const x = e.clientX;
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent(`pterodactyl:files:ctx:${file.key}`, { detail: x }));
+            }, 0);
         }}
     >
         <SelectFileCheckbox name={file.name} />
