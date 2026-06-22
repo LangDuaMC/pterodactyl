@@ -1,78 +1,78 @@
-x-common:
-  database:
-    &db-environment
-    # Do not remove the "&db-password" from the end of the line below, it is important
-    # for Panel functionality.
-    MYSQL_PASSWORD: &db-password "CHANGE_ME"
-    MYSQL_ROOT_PASSWORD: "CHANGE_ME_TOO"
-  panel:
-    &panel-environment
-    APP_URL: "http://example.com"
-    # A list of valid timezones can be found here: http://php.net/manual/en/timezones.php
-    APP_TIMEZONE: "UTC"
-    APP_SERVICE_AUTHOR: "noreply@example.com"
-  mail:
-    &mail-environment
-    MAIL_FROM: "noreply@example.com"
-    MAIL_DRIVER: "smtp"
-    MAIL_HOST: "mail"
-    MAIL_PORT: "1025"
-    MAIL_USERNAME: ""
-    MAIL_PASSWORD: ""
-    MAIL_ENCRYPTION: "true"
-
 #
-# ------------------------------------------------------------------------------------------
-# DANGER ZONE BELOW
-#
-# The remainder of this file likely does not need to be changed. Please only make modifications
-# below if you understand what you are doing.
-#
+# ── Zero-mount compose ──────────────────────────────────────────────────
+# The panel container needs NO persistent volumes other than the DB image.
+#   * Provide APP_KEY and HASHIDS_SALT as env vars (generate once, keep safe).
+#   * If omitted, they are auto-generated but will reset on each restart
+#     (breaking sessions, encryption, and hashid URLs).
+#   * Logs go to stdout via supervisord — capture them with your
+#     container orchestrator (systemd-journald, Docker logs, etc.).
+# ──────────────────────────────────────────────────────────────────────────
 services:
   database:
     image: mariadb:11
     restart: always
     command: --default-authentication-plugin=mysql_native_password
     volumes:
-      - "/srv/pterodactyl/database:/var/lib/mysql"
+      - "db_data:/var/lib/mysql"
     environment:
-      <<: *db-environment
+      MYSQL_ROOT_PASSWORD: "CHANGE_ME"
+      MYSQL_PASSWORD: "CHANGE_ME"
       MYSQL_DATABASE: "panel"
       MYSQL_USER: "pterodactyl"
+
   cache:
     image: redis:alpine
     restart: always
+
   panel:
-    image: ghcr.io/pterodactyl/panel:latest
+    build: .
     restart: always
     ports:
       - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    links:
+    depends_on:
       - database
       - cache
-    volumes:
-      - "/srv/pterodactyl/var/:/app/var/"
-      - "/srv/pterodactyl/caddy/data:/data"
-      - "/srv/pterodactyl/caddy/config:/config"
-      - "/srv/pterodactyl/logs/:/app/storage/logs"
     environment:
-      <<: [*panel-environment, *mail-environment]
-      DB_PASSWORD: *db-password
-      APP_ENV: "production"
-      APP_ENVIRONMENT_ONLY: "false"
-      CACHE_STORE: "redis"
-      CACHE_DRIVER: "redis"
-      SESSION_DRIVER: "redis"
-      QUEUE_CONNECTION: "redis"
-      QUEUE_DRIVER: "redis"
-      REDIS_HOST: "cache"
+      # ── Required ─────────────────────────────────────────────────
+      APP_URL: "http://example.com"
+      APP_TIMEZONE: "UTC"
+      APP_SERVICE_AUTHOR: "noreply@example.com"
+
+      # ── Generate once and keep safe (see below) ──────────────────
+      # APP_KEY:
+      # HASHIDS_SALT:
+
+      # ── Database ─────────────────────────────────────────────────
       DB_HOST: "database"
       DB_PORT: "3306"
-      HASHIDS_LENGTH: 8
-networks:
-  default:
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+      DB_PASSWORD: "CHANGE_ME"
+
+      # ── Redis ────────────────────────────────────────────────────
+      REDIS_HOST: "cache"
+      CACHE_STORE: "redis"
+      QUEUE_CONNECTION: "redis"
+      SESSION_DRIVER: "redis"
+
+      # ── Mail (optional, omit or set your own) ────────────────────
+      MAIL_FROM: "noreply@example.com"
+      MAIL_DRIVER: "smtp"
+      MAIL_HOST: "mail"
+      MAIL_PORT: "1025"
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_ENCRYPTION: "true"
+
+volumes:
+  db_data:
+
+#
+# ── On first deployment ────────────────────────────────────────────────
+#   1. docker compose up -d
+#   2. docker compose exec panel php artisan p:user:make
+#
+# ── Generating APP_KEY & HASHIDS_SALT ──────────────────────────────────
+#   APP_KEY=$(head -c 48 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 32)
+#   HASHIDS_SALT=$(head -c 48 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 20)
+#   echo "APP_KEY=$APP_KEY"
+#   echo "HASHIDS_SALT=$HASHIDS_SALT"
+#
