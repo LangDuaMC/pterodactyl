@@ -15,6 +15,11 @@ class SubstituteClientBindings extends SubstituteBindings
         // Override default behavior of the model binding to use a specific table
         // column rather than the default 'id'.
         $this->router->bind('server', function ($value) {
+            // Numeric ID — passthrough to default binding (admin routes).
+            if (is_numeric($value)) {
+                return Server::query()->where('id', (int) $value)->firstOrFail();
+            }
+
             return Server::query()
                 ->when(
                     str_starts_with($value, 'serv_'),
@@ -25,8 +30,13 @@ class SubstituteClientBindings extends SubstituteBindings
         });
 
         $this->router->bind('user', function ($value, $route) {
+            $server = $route->parameter('server');
+            if (!$server) {
+                return \Pterodactyl\Models\User::query()->where('uuid', $value)->firstOrFail();
+            }
+
             /** @var \Pterodactyl\Models\Subuser $match */
-            $match = $route->parameter('server')
+            $match = $server
                 ->subusers()
                 ->whereRelation('user', 'uuid', '=', $value)
                 ->firstOrFail();

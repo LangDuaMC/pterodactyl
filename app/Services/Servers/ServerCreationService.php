@@ -6,8 +6,8 @@ use Ramsey\Uuid\Uuid;
 use Illuminate\Support\Arr;
 use Pterodactyl\Models\Egg;
 use Pterodactyl\Models\User;
-use Webmozart\Assert\Assert;
 use Pterodactyl\Models\Server;
+use Webmozart\Assert\Assert;
 use Illuminate\Support\Collection;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Services\Tenants\TenantQuotaService;
@@ -63,9 +63,7 @@ class ServerCreationService
 
         // Auto-configure the node based on the selected allocation
         // if no node was defined.
-        if (empty($data['node_id'])) {
-            Assert::false(empty($data['allocation_id']), 'Expected a non-empty allocation_id in server creation data.');
-
+        if (empty($data['node_id']) && !empty($data['allocation_id'])) {
             $data['node_id'] = Allocation::query()->findOrFail($data['allocation_id'])->node_id;
         }
 
@@ -177,14 +175,19 @@ class ServerCreationService
      */
     private function storeAssignedAllocations(Server $server, array $data): void
     {
-        $records = [$data['allocation_id']];
+        $records = [];
+        if (!empty($data['allocation_id'])) {
+            $records[] = $data['allocation_id'];
+        }
         if (isset($data['allocation_additional']) && is_array($data['allocation_additional'])) {
             $records = array_merge($records, $data['allocation_additional']);
         }
 
-        Allocation::query()->whereIn('id', $records)->update([
-            'server_id' => $server->id,
-        ]);
+        if (!empty($records)) {
+            Allocation::query()->whereIn('id', $records)->update([
+                'server_id' => $server->id,
+            ]);
+        }
     }
 
     /**

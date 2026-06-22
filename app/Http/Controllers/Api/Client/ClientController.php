@@ -2,8 +2,12 @@
 
 namespace Pterodactyl\Http\Controllers\Api\Client;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Permission;
+use Pterodactyl\Models\Tenant;
+use Pterodactyl\Models\User;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use Pterodactyl\Models\Filters\MultiFieldServerFilter;
@@ -26,46 +30,16 @@ class ClientController extends ClientApiController
      */
     public function index(GetServersRequest $request): array
     {
-        $user = $request->user();
         $transformer = $this->getTransformer(ServerTransformer::class);
-
-        // Start the query builder and ensure we eager load any requested relationships from the request.
-        $builder = QueryBuilder::for(
-            Server::query()->with(array_merge($this->getIncludesForTransformer($transformer, ['node']), ['tenant']))
-        )->allowedFilters([
-            'uuid',
-            'name',
-            'description',
-            'external_id',
-            AllowedFilter::custom('*', new MultiFieldServerFilter()),
-        ]);
-
-        $type = $request->input('type');
-        // Either return all the servers the user has access to because they are an admin `?type=admin` or
-        // just return all the servers the user has access to because they are the owner or a subuser of the
-        // server. If ?type=admin-all is passed all servers on the system will be returned to the user, rather
-        // than only servers they can see because they are an admin.
-        if (in_array($type, ['admin', 'admin-all'])) {
-            // If they aren't an admin but want all the admin servers don't fail the request, just
-            // make it a query that will never return any results back.
-            if (!$user->root_admin) {
-                $builder->whereRaw('1 = 2');
-            } else {
-                $builder = $type === 'admin-all'
-                    ? $builder
-                    : $builder->whereNotIn('servers.id', $user->accessibleServers()->pluck('id')->all());
-            }
-        } elseif ($type === 'owner') {
-            $builder = $builder->where('servers.owner_id', $user->id);
-        } elseif ($user->root_admin) {
-            $builder = $builder;
-        } else {
-            $builder = $builder->whereIn('servers.id', $user->accessibleServers()->pluck('id')->all());
-        }
+        $builder = $this->buildServerQuery($request, $transformer);
 
         $servers = $builder->paginate(min($request->query('per_page', 50), 100))->appends($request->query());
+        $tenantFilters = $this->tenantFiltersForScope($request, $this->resolveScope($request));
+        $response = $this->fractal->transformWith($transformer)->collection($servers)->toArray();
 
-        return $this->fractal->transformWith($transformer)->collection($servers)->toArray();
+        $response['meta']['tenant_filters'] = $tenantFilters;
+
+        return $response;
     }
 
     /**
@@ -79,5 +53,119 @@ class ClientController extends ClientApiController
                 'permissions' => Permission::permissions(),
             ],
         ];
+    }
+
+    private function buildServerQuery(GetServersRequest $request, ServerTransformer $transformer): QueryBuilder
+    {
+        $user = $request->user();
+        $type = (string) $request->input('type', '');
+
+        if (in_array($type, ['admin', 'admin-all', 'owner'], true)) {
+            $query = $this->legacyTypeQuery($user, $type);
+        } else {
+            $query = $this->scopedServerQuery($user, $this->resolveScope($request));
+        }
+
+        $builder = QueryBuilder::for(
+            $query->with(array_merge($this->getIncludesForTransformer($transformer, ['node']), ['tenant']))
+        )->allowedFilters([
+            'uuid',
+            'name',
+            'description',
+            'external_id',
+            AllowedFilter::custom('*', new MultiFieldServerFilter()),
+        ]);
+
+        return $builder;
+    }
+
+    private function legacyTypeQuery(User $user, string $type): Builder
+    {
+        return match ($type) {
+            'admin' => $user->root_admin
+                ? Server::query()->whereNotIn('servers.id', $user->accessibleServers()->pluck('id')->all())
+                : Server::query()->whereRaw('1 = 2'),
+            'admin-all' => $user->root_admin ? Server::query() : Server::query()->whereRaw('1 = 2'),
+            'owner' => Server::query()->where('servers.owner_id', $user->id),
+            default => Server::query()->whereRaw('1 = 2'),
+        };
+    }
+
+    private function scopedServerQuery(User $user, string $scope): Builder
+    {
+        if (str_starts_with($scope, 'tenant:')) {
+            $tenantId = (int) substr($scope, 7);
+
+            if ($tenantId > 0) {
+                return Server::query()->where('servers.tenant_id', $tenantId);
+            }
+        }
+
+        return match ($scope) {
+            'all' => $user->root_admin ? Server::query() : Server::query()->whereRaw('1 = 2'),
+            'owned' => Server::query()->where('servers.owner_id', $user->id),
+            default => $user->accessibleServers(),
+        };
+    }
+
+    private function resolveScope(Request $request): string
+    {
+        $scope = (string) $request->input('scope', '');
+
+        if ($scope !== '') {
+            if (in_array($scope, ['accessible', 'owned', 'all'], true) || str_starts_with($scope, 'tenant:')) {
+                return $scope;
+            }
+
+            return 'accessible';
+        }
+
+        $type = (string) $request->input('type', '');
+
+        if ($type === 'admin-all') {
+            return 'all';
+        }
+
+        if ($type === 'owner') {
+            return 'owned';
+        }
+
+        if ($type === 'admin') {
+            return 'accessible';
+        }
+
+        return $request->user()->root_admin ? 'all' : 'accessible';
+    }
+
+    private function tenantFiltersForScope(GetServersRequest $request, string $scope): array
+    {
+        if ($request->user()->root_admin) {
+            return Tenant::query()
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn (Tenant $tenant) => [
+                    'value' => sprintf('tenant:%d', $tenant->id),
+                    'label' => $tenant->name,
+                ])
+                ->all();
+        }
+
+        $query = $this->scopedServerQuery($request->user(), $scope)
+            ->whereNotNull('servers.tenant_id')
+            ->with('tenant')
+            ->select(['servers.id', 'servers.tenant_id'])
+            ->distinct();
+
+        return $query->get()
+            ->pluck('tenant')
+            ->filter()
+            ->unique('id')
+            ->sortBy('name')
+            ->values()
+            ->map(fn ($tenant) => [
+                'value' => sprintf('tenant:%d', $tenant->id),
+                'label' => $tenant->name,
+            ])
+            ->all();
     }
 }

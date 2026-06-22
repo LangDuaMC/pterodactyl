@@ -132,6 +132,7 @@
                             <div class="form-group">
                                 <label for="pAllocation" class="control-label">Game Port</label>
                                 <select id="pAllocation" name="allocation_id" class="form-control">
+                                    <option value="">None (No Default Port)</option>
                                     @foreach ($assigned as $assignment)
                                         <option value="{{ $assignment->id }}"
                                             @if($assignment->id === $server->allocation_id)

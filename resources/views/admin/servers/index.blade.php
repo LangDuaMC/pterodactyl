@@ -59,7 +59,11 @@
                                 <td><a href="{{ route('admin.users.view', $server->user->id) }}">{{ $server->user->username }}</a></td>
                                 <td><a href="{{ route('admin.nodes.view', $server->node->id) }}">{{ $server->node->name }}</a></td>
                                 <td>
-                                    <code>{{ $server->egg->default_port ? $server->uuidShort . ':' . $server->egg->default_port : ($server->allocation?->alias ?? '0.0.0.0') . ':' . ($server->allocation?->port ?? '0') }}</code>
+                                    @if($server->allocation)
+                                        <code>{{ $server->egg->default_port ? $server->uuidShort . ':' . $server->egg->default_port : $server->allocation->alias . ':' . $server->allocation->port }}</code>
+                                    @else
+                                        <span class="label label-default">No Default Port</span>
+                                    @endif
                                 </td>
                                 <td class="text-center">
                                     @if($server->isSuspended())
@@ -71,7 +75,7 @@
                                     @endif
                                 </td>
                                 <td class="text-center">
-                                    <a class="btn btn-xs btn-default" href="/server/{{ $server->uuidShort }}"><i class="fa fa-wrench"></i></a>
+                                    <a class="btn btn-xs btn-default" href="/server/{{ $server->identifier }}"><i class="fa fa-wrench"></i></a>
                                 </td>
                             </tr>
                         @endforeach

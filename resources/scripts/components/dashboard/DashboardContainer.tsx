@@ -1,64 +1,65 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Server } from '@/api/server/getServer';
-import getServers from '@/api/getServers';
-import ServerRow from '@/components/dashboard/ServerRow';
+import getServers, { PaginatedServerResponse } from '@/api/getServers';
+import ServerRow, { DashboardLayout } from '@/components/dashboard/ServerRow';
 import Spinner from '@/components/elements/Spinner';
 import PageContentBlock from '@/components/elements/PageContentBlock';
 import useFlash from '@/plugins/useFlash';
 import { useStoreState } from 'easy-peasy';
 import { usePersistedState } from '@/plugins/usePersistedState';
-import Switch from '@/components/elements/Switch';
 import tw from 'twin.macro';
 import useSWR from 'swr';
-import { PaginatedResult } from '@/api/http';
 import Pagination from '@/components/elements/Pagination';
 import { useLocation } from 'react-router-dom';
 import Select from '@/components/elements/Select';
-import GreyRowBox from '@/components/elements/GreyRowBox';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTable, faThLarge } from '@fortawesome/free-solid-svg-icons';
 import styled from 'styled-components/macro';
 
 import BeforeContent from '@blueprint/components/Dashboard/Serverlist/BeforeContent';
 import AfterContent from '@blueprint/components/Dashboard/Serverlist/AfterContent';
 
-type TenantFilter = 'all' | 'personal' | `tenant:${number}`;
+type DashboardView = 'accessible' | 'all' | `tenant:${number}`;
 
-interface TenantGroup {
-    key: TenantFilter;
-    name: string;
-    description: string | null;
-    servers: Server[];
-}
-
-const GroupBox = styled(GreyRowBox)`
-    padding: 1rem;
+const Toolbar = styled.div`
+    ${tw`mb-4 flex flex-wrap items-center gap-3`};
 `;
 
-const groupServers = (items: Server[]): TenantGroup[] => {
-    const groups = new Map<TenantFilter, TenantGroup>();
+const ToolbarBlock = styled.div`
+    ${tw`flex items-center gap-2`};
+`;
 
-    for (const server of items) {
-        const tenantId = server.tenantId ?? server.tenant?.id ?? null;
-        const key: TenantFilter = tenantId !== null ? (`tenant:${tenantId}` as TenantFilter) : 'personal';
+const ToolbarLabel = styled.p`
+    ${tw`text-xs uppercase tracking-[0.2em] text-neutral-500`};
+`;
 
-        if (!groups.has(key)) {
-            groups.set(key, {
-                key,
-                name: server.tenant?.name ?? 'Personal Servers',
-                description: server.tenant?.description ?? null,
-                servers: [],
-            });
-        }
+const ScopeSelect = styled(Select)`
+    ${tw`min-w-[13rem]`};
+`;
 
-        groups.get(key)!.servers.push(server);
-    }
+const ToggleGroup = styled.div`
+    ${tw`inline-flex rounded-lg bg-neutral-800/60 p-1`};
+`;
 
-    return Array.from(groups.values()).sort((left, right) => {
-        if (left.key === 'personal') return -1;
-        if (right.key === 'personal') return 1;
+const ToggleButton = styled.button<{ $active?: boolean }>`
+    ${tw`inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-xs uppercase tracking-[0.2em] transition-colors duration-150`};
+    ${(props) =>
+        props.$active
+            ? tw`bg-neutral-700 text-neutral-100`
+            : tw`text-neutral-400 hover:bg-neutral-700 hover:text-neutral-100`};
+`;
 
-        return left.name.localeCompare(right.name);
-    });
-};
+const ResultHeader = styled.div`
+    ${tw`mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between`};
+`;
+
+const ServerGrid = styled.div`
+    ${tw`grid gap-4 xl:grid-cols-2 2xl:grid-cols-3`};
+`;
+
+const EmptyState = styled.p`
+    ${tw`rounded-lg border border-dashed border-neutral-700 bg-neutral-800/40 px-6 py-10 text-center text-sm text-neutral-400`};
+`;
 
 export default () => {
     const { search } = useLocation();
@@ -68,35 +69,25 @@ export default () => {
     const { clearFlashes, clearAndAddHttpError } = useFlash();
     const uuid = useStoreState((state) => state.user.data!.uuid);
     const rootAdmin = useStoreState((state) => state.user.data!.rootAdmin);
-    const [showOnlyAdmin, setShowOnlyAdmin] = usePersistedState(`${uuid}:show_all_servers`, false);
-    const [tenantFilter, setTenantFilter] = usePersistedState<TenantFilter>(`${uuid}:dashboard_tenant_filter`, 'all');
+    const [scope, setScope] = usePersistedState<DashboardView>(`${uuid}:dashboard_scope`, rootAdmin ? 'all' : 'accessible');
+    const [layout, setLayout] = usePersistedState<DashboardLayout>(`${uuid}:dashboard_layout`, 'table');
+    const currentScope = !rootAdmin && scope === 'all' ? 'accessible' : scope ?? (rootAdmin ? 'all' : 'accessible');
+    const currentLayout = layout ?? 'table';
 
-    const { data: servers, error } = useSWR<PaginatedResult<Server>>(
-        ['/api/client/servers', showOnlyAdmin && rootAdmin, page],
-        () => getServers({ page, type: showOnlyAdmin && rootAdmin ? 'admin' : undefined }),
+    const { data: servers, error } = useSWR<PaginatedServerResponse>(
+        ['/api/client/servers', currentScope, page],
+        () => getServers({ page, scope: currentScope }),
     );
-
-    const serverGroups = groupServers(servers?.items || []);
-    const tenantOptions = serverGroups.filter((group) => group.key !== 'personal' || group.servers.length > 0);
-    const filteredTenantGroups = tenantFilter === 'all' ? serverGroups : serverGroups.filter((group) => group.key === tenantFilter);
-
-    useEffect(() => {
-        if (typeof showOnlyAdmin !== 'undefined') {
-            setPage(1);
-        }
-    }, [showOnlyAdmin]);
 
     useEffect(() => {
         if (!servers) return;
+
         if (servers.pagination.currentPage > 1 && !servers.items.length) {
             setPage(1);
         }
     }, [servers]);
 
     useEffect(() => {
-        // Don't use react-router to handle changing this part of the URL, otherwise it
-        // triggers a needless re-render. We just want to track this in the URL incase the
-        // user refreshes the page.
         window.history.replaceState(null, document.title, `/${page <= 1 ? '' : `?page=${page}`}`);
     }, [page]);
 
@@ -105,80 +96,109 @@ export default () => {
         if (!error) clearFlashes('dashboard');
     }, [error, clearAndAddHttpError, clearFlashes]);
 
+    const scopeOptions = useMemo(() => {
+        const options: Array<{ value: DashboardView; label: string }> = [{ value: 'accessible', label: 'My servers' }];
+
+        if (rootAdmin) {
+            options.unshift({ value: 'all', label: 'Everything' });
+        }
+
+        return options;
+    }, [rootAdmin]);
+
+    const handleLayoutChange = (nextLayout: DashboardLayout) => {
+        setLayout(nextLayout);
+    };
+
+    const selectScope = (nextScope: DashboardView) => {
+        setScope(nextScope);
+        setPage(1);
+    };
+
     return (
         <PageContentBlock title={'Dashboard'} showFlashKey={'dashboard'}>
             <BeforeContent />
-            {rootAdmin && (
-                <div css={tw`mb-2 flex justify-end items-center`}>
-                    <p css={tw`uppercase text-xs text-neutral-400 mr-2`}>
-                        {showOnlyAdmin ? "Showing others' servers" : 'Showing your servers'}
-                    </p>
-                    <Switch
-                        name={'show_all_servers'}
-                        defaultChecked={showOnlyAdmin}
-                        onChange={() => setShowOnlyAdmin((s) => !s)}
-                    />
-                </div>
-            )}
-            <div css={tw`mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between`}>
-                <div>
-                    <p css={tw`uppercase text-xs text-neutral-400 mb-1`}>Tenant view</p>
-                    <Select value={tenantFilter} onChange={(event) => setTenantFilter(event.currentTarget.value as TenantFilter)}>
-                        <option value={'all'}>All servers</option>
-                        <option value={'personal'}>Personal servers</option>
-                        {tenantOptions
-                            .filter((group) => group.key !== 'personal')
-                            .map((group) => (
-                                <option key={group.key} value={group.key}>
-                                    {group.name}
-                                </option>
-                            ))}
-                    </Select>
-                </div>
-                {tenantFilter !== 'all' && (
-                    <p css={tw`text-xs text-neutral-400`}>Filtered to a single tenant group on this page.</p>
-                )}
-            </div>
+
+            <Toolbar>
+                <ToolbarBlock>
+                    <ToolbarLabel>View</ToolbarLabel>
+                    <ScopeSelect value={currentScope} onChange={(event) => selectScope(event.currentTarget.value as DashboardView)}>
+                        {scopeOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                        {(servers?.tenantFilters || []).length > 0 && (
+                            <option disabled value={'divider'}>
+                                ──────────
+                            </option>
+                        )}
+                        {(servers?.tenantFilters || []).map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </ScopeSelect>
+                </ToolbarBlock>
+
+                <ToolbarBlock>
+                    <ToolbarLabel>Layout</ToolbarLabel>
+                    <ToggleGroup>
+                        <ToggleButton type={'button'} $active={currentLayout === 'table'} onClick={() => handleLayoutChange('table')} title={'Table view'} aria-label={'Table view'}>
+                            <FontAwesomeIcon icon={faTable} />
+                        </ToggleButton>
+                        <ToggleButton type={'button'} $active={currentLayout === 'grid'} onClick={() => handleLayoutChange('grid')} title={'Card view'} aria-label={'Card view'}>
+                            <FontAwesomeIcon icon={faThLarge} />
+                        </ToggleButton>
+                    </ToggleGroup>
+                </ToolbarBlock>
+            </Toolbar>
+
             {!servers ? (
                 <Spinner centered size={'large'} />
             ) : (
                 <Pagination data={servers} onPageSelect={setPage}>
                     {({ items }) => {
-                        const groups = filteredTenantGroups.length > 0 ? filteredTenantGroups : groupServers(items);
+                        const total = servers.pagination.total;
 
-                        return groups.length > 0 ? (
-                            groups.map((group) => (
-                                <GroupBox key={group.key} css={group.key !== groups[0].key ? tw`mt-4` : undefined}>
-                                    <div css={tw`flex items-start justify-between gap-4 mb-4`}>
-                                        <div>
-                                            <h2 css={tw`text-lg font-medium text-neutral-100`}>{group.name}</h2>
-                                            {group.description && (
-                                                <p css={tw`text-sm text-neutral-400 mt-1`}>{group.description}</p>
-                                            )}
-                                        </div>
-                                        <p css={tw`text-xs uppercase tracking-wide text-neutral-500`}>{group.servers.length} servers</p>
-                                    </div>
+                        return (
+                            <>
+                                <ResultHeader>
                                     <div>
-                                        {group.servers.map((server, index) => (
-                                            <ServerRow
-                                                key={server.uuid}
-                                                server={server}
-                                                css={index > 0 ? tw`mt-2` : undefined}
-                                            />
-                                        ))}
+                                        <h2 css={tw`text-base font-medium text-neutral-100`}>Server directory</h2>
+                                        <p css={tw`text-sm text-neutral-400`}>
+                                            {total} server{total === 1 ? '' : 's'} in this view.
+                                        </p>
                                     </div>
-                                </GroupBox>
-                            ))
-                        ) : (
-                            <p css={tw`text-center text-sm text-neutral-400`}>
-                                {showOnlyAdmin
-                                    ? 'There are no other servers to display.'
-                                    : 'There are no servers associated with your account.'}
-                            </p>
+                                </ResultHeader>
+
+                                {items.length > 0 ? (
+                                    currentLayout === 'grid' ? (
+                                        <ServerGrid>
+                                            {items.map((server) => (
+                                                <ServerRow key={server.uuid} server={server} layout={'grid'} />
+                                            ))}
+                                        </ServerGrid>
+                                    ) : (
+                                        <div css={tw`space-y-2`}>
+                                            {items.map((server) => (
+                                                <ServerRow key={server.uuid} server={server} layout={'table'} />
+                                            ))}
+                                        </div>
+                                    )
+                                ) : (
+                                    <EmptyState>
+                                        {currentScope === 'all'
+                                            ? 'There are no panel servers to display.'
+                                            : 'There are no servers available with this filter.'}
+                                    </EmptyState>
+                                )}
+                            </>
                         );
                     }}
                 </Pagination>
             )}
+
             <AfterContent />
         </PageContentBlock>
     );

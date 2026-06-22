@@ -311,6 +311,73 @@ class ClientControllerTest extends ClientApiIntegrationTestCase
     }
 
     /**
+     * Test that the explicit `scope=owned` picker option returns only the servers owned by the
+     * current user.
+     */
+    public function testOwnedScopeOnlyReturnsOwnedServers()
+    {
+        /** @var \Pterodactyl\Models\User[] $users */
+        $users = User::factory()->times(3)->create();
+
+        $servers = [
+            $this->createServerModel(['user_id' => $users[0]->id]),
+            $this->createServerModel(['user_id' => $users[1]->id]),
+            $this->createServerModel(['user_id' => $users[2]->id]),
+        ];
+
+        $response = $this->actingAs($users[0])->getJson('/api/client?scope=owned');
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.attributes.identifier', $servers[0]->uuidShort);
+    }
+
+    /**
+     * Test that the explicit `scope=all` picker option returns every server to a root admin.
+     */
+    public function testAllScopeReturnsAllServersToRootAdmin()
+    {
+        /** @var \Pterodactyl\Models\User[] $users */
+        $users = User::factory()->times(4)->create();
+        $users[0]->update(['root_admin' => true]);
+
+        $servers = [
+            $this->createServerModel(['user_id' => $users[0]->id]),
+            $this->createServerModel(['user_id' => $users[1]->id]),
+            $this->createServerModel(['user_id' => $users[2]->id]),
+            $this->createServerModel(['user_id' => $users[3]->id]),
+        ];
+
+        $response = $this->actingAs($users[0])->getJson('/api/client?scope=all');
+
+        $response->assertOk();
+        $response->assertJsonCount(4, 'data');
+        $response->assertJsonPath('data.0.attributes.identifier', $servers[0]->uuidShort);
+    }
+
+    /**
+     * Test that tenant filters are included alongside the paginated server response.
+     */
+    public function testTenantFiltersAreReturnedWithServers()
+    {
+        $user = User::factory()->create(['root_admin' => true]);
+        $tenantA = Tenant::factory()->create(['name' => 'Alpha']);
+        $tenantB = Tenant::factory()->create(['name' => 'Beta']);
+
+        $this->createServerModel(['user_id' => $user->id, 'tenant_id' => $tenantB->id]);
+        $this->createServerModel(['user_id' => $user->id, 'tenant_id' => $tenantA->id]);
+        $this->createServerModel(['user_id' => $user->id]);
+
+        $response = $this->actingAs($user)->getJson('/api/client?scope=all');
+
+        $response->assertOk();
+        $response->assertJsonPath('meta.tenant_filters.0.value', 'tenant:' . $tenantA->id);
+        $response->assertJsonPath('meta.tenant_filters.0.label', 'Alpha');
+        $response->assertJsonPath('meta.tenant_filters.1.value', 'tenant:' . $tenantB->id);
+        $response->assertJsonPath('meta.tenant_filters.1.label', 'Beta');
+    }
+
+    /**
      * Test that no servers get returned if the user requests all admin level servers by using
      * ?type=admin or ?type=admin-all in the request.
      */

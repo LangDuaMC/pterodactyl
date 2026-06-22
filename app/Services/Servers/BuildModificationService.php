@@ -39,16 +39,25 @@ class BuildModificationService
             $this->processAllocations($server, $data);
 
             if (isset($data['allocation_id']) && $data['allocation_id'] != $server->allocation_id) {
-                try {
-                    Allocation::query()->where('id', $data['allocation_id'])->where('server_id', $server->id)->firstOrFail();
-                } catch (ModelNotFoundException) {
-                    throw new DisplayException('The requested default allocation is not currently assigned to this server.');
+                if (empty($data['allocation_id'])) {
+                    $data['allocation_id'] = null;
+                } else {
+                    try {
+                        Allocation::query()->where('id', $data['allocation_id'])->where('server_id', $server->id)->firstOrFail();
+                    } catch (ModelNotFoundException) {
+                        throw new DisplayException('The requested default allocation is not currently assigned to this server.');
+                    }
                 }
             }
 
             // If any of these values are passed through in the data array go ahead and set
             // them correctly on the server model.
             $merge = Arr::only($data, ['oom_disabled', 'memory', 'swap', 'io', 'cpu', 'threads', 'disk', 'allocation_id']);
+
+            // Normalize allocation_id: empty string (from "None" selection) -> null.
+            if (array_key_exists('allocation_id', $merge) && empty($merge['allocation_id'])) {
+                $merge['allocation_id'] = null;
+            }
 
             $this->tenantQuotaService->assertWithinQuota($server->tenant_id, array_merge($server->toArray(), $merge, [
                 'database_limit' => Arr::get($data, 'database_limit', $server->database_limit),
@@ -114,6 +123,12 @@ class BuildModificationService
                 // to the first provided value in add_allocations. If there is no new first allocation then we
                 // will throw an exception back.
                 if ($allocation === ($data['allocation_id'] ?? $server->allocation_id)) {
+                    // Allow explicit removal by setting allocation_id to empty ("None").
+                    if (array_key_exists('allocation_id', $data) && empty($data['allocation_id'])) {
+                        $data['allocation_id'] = null;
+                        continue;
+                    }
+
                     if (empty($freshlyAllocated)) {
                         throw new DisplayException('You are attempting to delete the default allocation for this server but there is no fallback allocation to use.');
                     }

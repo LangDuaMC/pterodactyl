@@ -180,7 +180,7 @@
                         <label for="pMemory">Memory</label>
 
                         <div class="input-group">
-                            <input type="text" id="pMemory" name="memory" class="form-control" value="{{ old('memory') }}" />
+                            <input type="text" id="pMemory" name="memory" class="form-control" value="{{ old('memory', 0) }}" />
                             <span class="input-group-addon">MiB</span>
                         </div>
 
@@ -204,7 +204,7 @@
                         <label for="pDisk">Disk Space</label>
 
                         <div class="input-group">
-                            <input type="text" id="pDisk" name="disk" class="form-control" value="{{ old('disk') }}" />
+                            <input type="text" id="pDisk" name="disk" class="form-control" value="{{ old('disk', 0) }}" />
                             <span class="input-group-addon">MiB</span>
                         </div>
 

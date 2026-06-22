@@ -106,15 +106,25 @@
                             </tr>
                             <tr>
                                 <td>Default Connection</td>
-                                <td><code>{{ $server->egg->default_port ? $server->uuidShort . ':' . $server->egg->default_port : $server->allocation->ip . ':' . $server->allocation->port }}</code></td>
+                                <td>
+                                    @if($server->allocation)
+                                        <code>{{ $server->egg->default_port ? $server->uuidShort . ':' . $server->egg->default_port : $server->allocation->ip . ':' . $server->allocation->port }}</code>
+                                    @else
+                                        <span class="label label-default">No Default Port</span>
+                                    @endif
+                                </td>
                             </tr>
                             <tr>
                                 <td>Connection Alias</td>
                                 <td>
-                                    @if($server->allocation->alias !== $server->allocation->ip)
-                                        <code>{{ $server->allocation->alias }}:{{ $server->allocation->port }}</code>
+                                    @if($server->allocation)
+                                        @if($server->allocation->alias !== $server->allocation->ip)
+                                            <code>{{ $server->allocation->alias }}:{{ $server->allocation->port }}</code>
+                                        @else
+                                            <span class="label label-default">No Alias Assigned</span>
+                                        @endif
                                     @else
-                                        <span class="label label-default">No Alias Assigned</span>
+                                        <span class="label label-default">No Default Port</span>
                                     @endif
                                 </td>
                             </tr>

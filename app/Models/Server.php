@@ -166,7 +166,7 @@ class Server extends Model implements Identifiable
         'threads' => 'nullable|regex:/^[0-9-,]+$/',
         'oom_disabled' => 'sometimes|boolean',
         'disk' => 'required|numeric|min:0',
-        'allocation_id' => 'required|bail|unique:servers|exists:allocations,id',
+        'allocation_id' => 'nullable|bail|unique:servers|exists:allocations,id',
         'nest_id' => 'required|exists:nests,id',
         'egg_id' => 'required|exists:eggs,id',
         'startup' => 'required|string',

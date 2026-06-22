@@ -32,7 +32,7 @@ class ServerFormRequest extends AdminFormRequest
             });
 
             $validator->sometimes('allocation_id', [
-                'required',
+                'nullable',
                 'numeric',
                 'bail',
                 Rule::exists('allocations', 'id')->where(function ($query) {

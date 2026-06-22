@@ -5,9 +5,19 @@ interface QueryParams {
     query?: string;
     page?: number;
     type?: string;
+    scope?: string;
 }
 
-export default ({ query, ...params }: QueryParams): Promise<PaginatedResult<Server>> => {
+export interface ServerTenantFilter {
+    value: `tenant:${number}`;
+    label: string;
+}
+
+export interface PaginatedServerResponse extends PaginatedResult<Server> {
+    tenantFilters: ServerTenantFilter[];
+}
+
+export default ({ query, ...params }: QueryParams): Promise<PaginatedServerResponse> => {
     return new Promise((resolve, reject) => {
         http.get('/api/client', {
             params: {
@@ -19,6 +29,7 @@ export default ({ query, ...params }: QueryParams): Promise<PaginatedResult<Serv
                 resolve({
                     items: (data.data || []).map((datum: any) => rawDataToServerObject(datum)),
                     pagination: getPaginationSet(data.meta.pagination),
+                    tenantFilters: data.meta?.tenant_filters || [],
                 }),
             )
             .catch(reject);

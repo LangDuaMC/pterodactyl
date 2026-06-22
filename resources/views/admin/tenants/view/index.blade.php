@@ -189,8 +189,8 @@
                 <form action="{{ route('admin.tenants.members.store', $tenant->id) }}" method="POST" class="form-inline">
                     {!! csrf_field() !!}
                     <div class="form-group">
-                        <label class="sr-only" for="memberEmail">Email</label>
-                        <input type="email" id="memberEmail" name="email" class="form-control input-sm" placeholder="user@example.com" />
+                        <label class="sr-only" for="pUserId">User</label>
+                        <select id="pUserId" name="user_id" class="form-control input-sm" style="min-width:260px;"></select>
                     </div>
                     <div class="form-group">
                         <label class="sr-only" for="memberRole">Role</label>
@@ -232,4 +232,60 @@
         </div>
     </div>
 </div>
+@section('footer-scripts')
+    @parent
+    <script>
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+
+    $('#pUserId').select2({
+        ajax: {
+            url: '/admin/users/accounts.json',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    filter: { email: params.term },
+                    page: params.page,
+                };
+            },
+            processResults: function (data) {
+                return { results: data };
+            },
+            cache: true,
+        },
+        placeholder: 'Search for a user',
+        escapeMarkup: function (markup) { return markup; },
+        minimumInputLength: 2,
+        templateResult: function (data) {
+            if (data.loading) return escapeHtml(data.text);
+
+            return '<div class="user-block"> \
+                <img class="img-circle img-bordered-xs" src="https://www.gravatar.com/avatar/' + escapeHtml(data.md5) + '?s=120" alt="User Image"> \
+                <span class="username"> \
+                    <a href="#">' + escapeHtml(data.name_first) + ' ' + escapeHtml(data.name_last) +'</a> \
+                </span> \
+                <span class="description"><strong>' + escapeHtml(data.email) + '</strong> - ' + escapeHtml(data.username) + '</span> \
+            </div>';
+        },
+        templateSelection: function (data) {
+            if (typeof data.name_first === 'undefined') {
+                return data.text || 'Search for a user';
+            }
+
+            return '<div> \
+                <span> \
+                    <img class="img-rounded img-bordered-xs" src="https://www.gravatar.com/avatar/' + escapeHtml(data.md5) + '?s=120" style="height:28px;margin-top:-4px;" alt="User Image"> \
+                </span> \
+                <span style="padding-left:5px;"> \
+                    ' + escapeHtml(data.name_first) + ' ' + escapeHtml(data.name_last) + ' (<strong>' + escapeHtml(data.email) + '</strong>) \
+                </span> \
+            </div>';
+        }
+    });
+    </script>
+@endsection
 @endsection
