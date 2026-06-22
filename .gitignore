@@ -40,3 +40,4 @@ package-lock.json
 database/build_sqlite_schema.php
 data/
 .playwright-mcp/
+/public/icons

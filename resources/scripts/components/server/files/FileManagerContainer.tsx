@@ -86,16 +86,31 @@ export default () => {
     const fetchFileContentRef = useRef<(() => Promise<string>) | null>(null);
 
     const skipHashSync = useRef(false);
-    const hashSynced = useRef(false);
+    const initialised = useRef(false);
+
+    useEffect(() => {
+        if (tabs.length === 0 && !initialised.current) {
+            initialised.current = true;
+            const hash = window.location.hash;
+            if (hash.startsWith('#browser:')) {
+                openBrowserTab(hashToPath(hash.replace('#browser:', '')));
+            } else if (hash.startsWith('#editor:')) {
+                const path = hashToPath(hash.replace('#editor:', ''));
+                openEditorTab({
+                    path,
+                    name: path.split('/').filter(Boolean).pop() || path,
+                    mode: 'text/plain',
+                });
+            } else {
+                openBrowserTab('/');
+            }
+        }
+    }, []);
 
     useEffect(() => {
         clearFlashes('files');
         setSelectedFiles([]);
     }, [tabs]);
-
-    useEffect(() => {
-        setDirectory(hashToPath(window.location.hash));
-    }, []);
 
     const onSelectAllClick = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSelectedFiles(e.currentTarget.checked ? files?.map((file) => file.name) || [] : []);

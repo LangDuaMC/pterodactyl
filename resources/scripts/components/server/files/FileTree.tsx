@@ -3,11 +3,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faChevronRight,
     faChevronDown,
-    faFileAlt,
-    faFileArchive,
-    faFileImport,
-    faFolder,
-    faFolderOpen,
 } from '@fortawesome/free-solid-svg-icons';
 import loadDirectory, { FileObject } from '@/api/server/files/loadDirectory';
 import { ServerContext } from '@/state/server';
@@ -16,6 +11,7 @@ import tw from 'twin.macro';
 import styled from 'styled-components/macro';
 import SelectFileCheckbox from '@/components/server/files/SelectFileCheckbox';
 import FileDropdownMenu from '@/components/server/files/FileDropdownMenu';
+import FileIcon from '@/components/server/files/FileIcon';
 
 const TreeContainer = styled.div`
     ${tw`text-sm overflow-y-auto overflow-x-hidden select-none`}
@@ -26,10 +22,6 @@ const TreeContainer = styled.div`
     &::-webkit-scrollbar {
         width: 4px;
     }
-`;
-
-const RootRow = styled.div`
-    ${tw`flex items-center gap-1 px-2 py-0.5 text-neutral-300 cursor-pointer hover:text-neutral-100`}
 `;
 
 interface TreeNodeProps {
@@ -79,39 +71,42 @@ const TreeNode = React.memo(
             }
         }, [file.isFile, path, uuid, children]);
 
-        const handleClick = useCallback(() => {
+        const handleNameClick = useCallback((e: React.MouseEvent) => {
+            e.stopPropagation();
             if (file.isFile) {
                 onOpenFile(path, file.name);
             } else {
-                toggle();
+                if (!expanded && children === null) {
+                    setLoading(true);
+                    loadDirectory(uuid, path)
+                        .then(setChildren)
+                        .catch(() => setChildren([]))
+                        .finally(() => setLoading(false));
+                }
+                setExpanded((prev) => !prev);
                 onOpenBrowserTab(path);
             }
-        }, [file.isFile, path, file.name, onOpenFile, toggle, onOpenBrowserTab]);
+        }, [file.isFile, path, file.name, onOpenFile, onOpenBrowserTab, expanded, children, uuid]);
 
-        const icon = file.isFile
-            ? file.isSymlink
-                ? faFileImport
-                : file.isArchiveType()
-                  ? faFileArchive
-                  : faFileAlt
-            : expanded
-              ? faFolderOpen
-              : faFolder;
+        const handleChevronClick = useCallback((e: React.MouseEvent) => {
+            e.stopPropagation();
+            toggle();
+        }, [toggle]);
 
         const isActive = !file.isFile && currentDirectory === path;
 
         return (
             <>
                 <div
-                    onClick={handleClick}
                     css={[
-                        tw`flex items-center gap-1 px-1 py-0.5 rounded cursor-pointer whitespace-nowrap hover:bg-neutral-600`,
+                        tw`flex items-center gap-1 px-1 py-0.5 rounded whitespace-nowrap hover:bg-neutral-600`,
                         isActive && tw`bg-neutral-600 text-neutral-100`,
                         !isActive && tw`text-neutral-400 hover:text-neutral-200`,
                     ]}
                     style={{ paddingLeft: `${depth * 16 + 4}px` }}
                     onContextMenu={(e) => {
                         e.preventDefault();
+                        window.dispatchEvent(new CustomEvent('pterodactyl:files:ctx:close'));
                         const x = e.clientX;
                         setTimeout(() => {
                             window.dispatchEvent(
@@ -120,18 +115,45 @@ const TreeNode = React.memo(
                         }, 0);
                     }}
                 >
-                    {!file.isFile && (
-                        <span css={tw`w-3 flex-shrink-0 text-neutral-500`}>
+                    {/* Chevron: expand/collapse */}
+                    <span
+                        css={tw`w-3 flex-shrink-0 text-neutral-500 cursor-pointer`}
+                        onClick={handleChevronClick}
+                    >
+                        {!file.isFile && (
                             <FontAwesomeIcon icon={expanded ? faChevronDown : faChevronRight} size='xs' />
-                        </span>
-                    )}
-                    {file.isFile && <span css={tw`w-3 flex-shrink-0`} />}
-                    {!file.isFile && <SelectFileCheckbox name={file.name} />}
-                    {file.isFile && <span css={tw`w-4 flex-shrink-0`} />}
-                    <span css={tw`w-4 flex-shrink-0 text-neutral-500`}>
-                        <FontAwesomeIcon icon={icon} size='sm' />
+                        )}
                     </span>
-                    <span css={tw`truncate`}>{file.name}</span>
+
+                    {/* Selection area: checkbox for folders */}
+                    <span css={tw`w-4 flex-shrink-0 flex items-center justify-center`}>
+                        {!file.isFile && <SelectFileCheckbox name={file.name} />}
+                    </span>
+
+                    {/* File/folder icon */}
+                    <span css={tw`w-4 flex-shrink-0 flex items-center justify-center`}>
+                        <FileIcon
+                            name={file.name}
+                            isFile={file.isFile}
+                            isSymlink={file.isSymlink}
+                            isArchive={file.isArchiveType()}
+                            isExpanded={expanded}
+                            size={14}
+                        />
+                    </span>
+
+                    {/* Name: navigate */}
+                    <span
+                        css={[
+                            tw`truncate cursor-pointer`,
+                            !file.isFile && tw`text-neutral-300`,
+                            file.isFile && tw`text-neutral-400`,
+                        ]}
+                        onClick={handleNameClick}
+                    >
+                        {file.name}
+                    </span>
+
                     {loading && <span css={tw`text-neutral-600 text-xs`}>...</span>}
                     <FileDropdownMenu file={file} noToggle />
                 </div>
@@ -195,10 +217,12 @@ const FileTree: React.FC<{
     return (
         <TreeContainer>
             <FileDropdownMenu file={rootFile} noToggle isRoot>
-                <RootRow
+                <div
+                    css={tw`flex items-center gap-1 px-2 py-0.5 text-neutral-300 cursor-pointer hover:text-neutral-100`}
                     onClick={() => openBrowserTab('/')}
                     onContextMenu={(e) => {
                         e.preventDefault();
+                        window.dispatchEvent(new CustomEvent('pterodactyl:files:ctx:close'));
                         const x = e.clientX;
                         setTimeout(() => {
                             window.dispatchEvent(
@@ -207,9 +231,9 @@ const FileTree: React.FC<{
                         }, 0);
                     }}
                 >
-                    <FolderIcon />
+                    <FileIcon name='/' isFile={false} isExpanded size={14} />
                     <span css={tw`text-xs font-medium`}>/ (root)</span>
-                </RootRow>
+                </div>
             </FileDropdownMenu>
             {roots.map((root) => (
                 <TreeNode
@@ -225,9 +249,5 @@ const FileTree: React.FC<{
         </TreeContainer>
     );
 };
-
-const FolderIcon: React.FC = () => (
-    <FontAwesomeIcon icon={faFolderOpen} size='sm' css={tw`mr-1`} />
-);
 
 export default FileTree;

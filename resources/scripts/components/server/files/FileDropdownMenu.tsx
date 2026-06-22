@@ -38,9 +38,9 @@ import DropdownItems from '@blueprint/components/Server/Files/Browse/DropdownIte
 type ModalType = 'rename' | 'move' | 'chmod';
 
 const StyledRow = styled.div<{ $danger?: boolean }>`
-    ${tw`p-2 flex items-center rounded`};
+    ${tw`p-2 flex items-center rounded cursor-pointer`};
     ${(props) =>
-        props.$danger ? tw`hover:bg-red-100 hover:text-red-700` : tw`hover:bg-neutral-100 hover:text-neutral-700`};
+        props.$danger ? tw`hover:bg-red-900 hover:text-red-300` : tw`hover:bg-neutral-700 hover:text-neutral-100`};
 `;
 
 interface RowProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -77,6 +77,12 @@ const FileDropdownMenu = ({ file, noToggle, isRoot, children }: Props) => {
     useEventListener(`pterodactyl:files:ctx:${file.key}`, (e: CustomEvent) => {
         if (onClickRef.current) {
             onClickRef.current.triggerMenu(e.detail, true);
+        }
+    });
+
+    useEventListener('pterodactyl:files:ctx:close', () => {
+        if (onClickRef.current) {
+            onClickRef.current.close();
         }
     });
 

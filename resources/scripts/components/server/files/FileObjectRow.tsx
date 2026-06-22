@@ -1,5 +1,3 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileAlt, faFileArchive, faFileImport, faFolder } from '@fortawesome/free-solid-svg-icons';
 import { differenceInHours, format, formatDistanceToNow } from 'date-fns';
 import React, { memo } from 'react';
 import { FileObject } from '@/api/server/files/loadDirectory';
@@ -8,6 +6,7 @@ import { ServerContext } from '@/state/server';
 import tw from 'twin.macro';
 import isEqual from 'react-fast-compare';
 import SelectFileCheckbox from '@/components/server/files/SelectFileCheckbox';
+import FileIcon from '@/components/server/files/FileIcon';
 import { usePermissions } from '@/plugins/usePermissions';
 import { join } from 'pathe';
 import { bytesToString } from '@/lib/formatters';
@@ -103,6 +102,7 @@ const FileObjectRow = ({
         key={file.name}
         onContextMenu={(e) => {
             e.preventDefault();
+            window.dispatchEvent(new CustomEvent('pterodactyl:files:ctx:close'));
             const x = e.clientX;
             setTimeout(() => {
                 window.dispatchEvent(new CustomEvent(`pterodactyl:files:ctx:${file.key}`, { detail: x }));
@@ -111,14 +111,14 @@ const FileObjectRow = ({
     >
         <SelectFileCheckbox name={file.name} />
         <Clickable file={file}>
-            <div css={tw`flex-none text-neutral-400 ml-6 mr-4 text-lg pl-3`}>
-                {file.isFile ? (
-                    <FontAwesomeIcon
-                        icon={file.isSymlink ? faFileImport : file.isArchiveType() ? faFileArchive : faFileAlt}
-                    />
-                ) : (
-                    <FontAwesomeIcon icon={faFolder} />
-                )}
+            <div css={tw`flex-none ml-6 mr-4 pl-3 flex items-center`}>
+                <FileIcon
+                    name={file.name}
+                    isFile={file.isFile}
+                    isSymlink={file.isSymlink}
+                    isArchive={file.isArchiveType()}
+                    size={18}
+                />
             </div>
             <div css={tw`flex-1 truncate`}>{file.name}</div>
             {file.isFile && <div css={tw`w-1/6 text-right mr-4 hidden sm:block`}>{bytesToString(file.size)}</div>}
