@@ -30,7 +30,6 @@ interface TreeNodeProps {
     path: string;
     currentDirectory: string;
     onOpenFile: (path: string, name: string) => void;
-    onOpenBrowserTab: (path: string) => void;
 }
 
 const TreeNode = React.memo(
@@ -40,7 +39,6 @@ const TreeNode = React.memo(
         path,
         currentDirectory,
         onOpenFile,
-        onOpenBrowserTab,
     }: TreeNodeProps) => {
         const [expanded, setExpanded] = useState(
             currentDirectory.startsWith(path + '/') || currentDirectory === path,
@@ -79,9 +77,8 @@ const TreeNode = React.memo(
                 onOpenFile(path, file.name);
             } else {
                 handleToggle();
-                onOpenBrowserTab(path);
             }
-        }, [file.isFile, path, file.name, onOpenFile, handleToggle, onOpenBrowserTab]);
+        }, [file.isFile, file.name, path, onOpenFile, handleToggle]);
 
         const handleChevronClick = useCallback((e: React.MouseEvent) => {
             e.stopPropagation();
@@ -153,7 +150,6 @@ const TreeNode = React.memo(
                                 path={join(path, child.name)}
                                 currentDirectory={currentDirectory}
                                 onOpenFile={onOpenFile}
-                                onOpenBrowserTab={onOpenBrowserTab}
                             />
                         ))}
                     </>
@@ -221,7 +217,6 @@ const FileTree: React.FC<{
                     path={root.name}
                     currentDirectory={directory}
                     onOpenFile={onOpenFile}
-                    onOpenBrowserTab={(path) => openBrowserTab(path)}
                 />
             ))}
         </TreeContainer>

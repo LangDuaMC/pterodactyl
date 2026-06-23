@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faBoxOpen,
     faCopy,
+    faExternalLinkAlt,
     faFileArchive,
     faFileCode,
     faFileDownload,
@@ -66,6 +67,7 @@ const ContextMenuHost: React.FC = () => {
 
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const directory = ServerContext.useStoreState((state) => state.files.directory);
+    const openBrowserTab = ServerContext.useStoreActions((a) => a.files.openBrowserTab);
     const { mutate } = useFileManagerSwr();
     const { clearAndAddHttpError, clearFlashes } = useFlash();
 
@@ -241,6 +243,16 @@ const ContextMenuHost: React.FC = () => {
                     )}
                     {showMenuItems ? (
                         <>
+                            {!file.isFile && (
+                                <ItemIcon
+                                    icon={faExternalLinkAlt}
+                                    title={'Open in new tab'}
+                                    onClick={() => {
+                                        openBrowserTab(join(directory, file.name));
+                                        close();
+                                    }}
+                                />
+                            )}
                             <Can action={'file.update'}>
                                 <ItemIcon icon={faPencilAlt} title={'Rename'} onClick={() => openModal('rename')} />
                                 <ItemIcon icon={faLevelUpAlt} title={'Move'} onClick={() => openModal('move')} />
