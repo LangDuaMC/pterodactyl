@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faBoxOpen,
@@ -78,43 +78,34 @@ const ContextMenuHost: React.FC = () => {
         setModalFile(null);
     }, []);
 
-    const handleContextMenu = useCallback((e: MouseEvent) => {
-        if (menuRef.current && menuRef.current.contains(e.target as Node)) {
-            e.preventDefault();
-            return;
-        }
-        close();
-    }, [close]);
-
     useEffect(() => {
         const handler = (e: CustomEvent<ContextTarget>) => {
-            const { posX, posY } = e.detail;
-            if (menuRef.current) {
-                menuRef.current.style.left = `${posX}px`;
-                menuRef.current.style.top = `${posY}px`;
-            }
             setTarget(e.detail);
         };
         window.addEventListener('pterodactyl:files:ctx:open', handler as EventListener);
         return () => window.removeEventListener('pterodactyl:files:ctx:open', handler as EventListener);
     }, []);
 
-    useEffect(() => {
-        if (!target) return;
-        const handleClick = (e: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-                setTarget(null);
-            }
-        };
-        document.addEventListener('click', handleClick);
-        document.addEventListener('contextmenu', handleContextMenu);
-        return () => {
-            document.removeEventListener('click', handleClick);
-            document.removeEventListener('contextmenu', handleContextMenu);
-        };
-    }, [target, handleContextMenu]);
+    useLayoutEffect(() => {
+        if (!target || !menuRef.current) return;
+        const menu = menuRef.current;
+        const rect = menu.getBoundingClientRect();
+        const { innerWidth, innerHeight } = window;
+        const pad = 4;
 
-    const { posX, posY, isRoot } = target ?? { posX: 0, posY: 0, isRoot: false };
+        let left = target.posX - rect.width;
+        let top = target.posY;
+
+        if (left < pad) left = pad;
+        if (left + rect.width > innerWidth - pad) left = innerWidth - rect.width - pad;
+        if (top < pad) top = pad;
+        if (top + rect.height > innerHeight - pad) top = innerHeight - rect.height - pad;
+
+        menu.style.left = `${left}px`;
+        menu.style.top = `${top}px`;
+    }, [target]);
+
+    const isRoot = target?.isRoot ?? false;
     const file = target?.file ?? modalFile;
 
     const doDeletion = () => {
@@ -219,16 +210,14 @@ const ContextMenuHost: React.FC = () => {
             )}
             {!target ? null : ((file) => (
             <Portal>
+                <div css={tw`fixed inset-0 z-50`} onClick={close} onContextMenu={(e) => { e.preventDefault(); close(); }} />
                 <div
                     ref={menuRef}
                     onContextMenu={(e) => e.preventDefault()}
-                    onClick={(e) => {
-                        if (e.target === e.currentTarget) setTarget(null);
-                    }}
                     style={{
                         position: 'fixed',
-                        left: `${Math.max(4, Math.min(posX - 192, window.innerWidth - 196))}px`,
-                        top: `${Math.max(4, Math.min(posY, window.innerHeight - 48))}px`,
+                        left: 0,
+                        top: 0,
                         width: '12rem',
                         zIndex: 9999,
                     }}
