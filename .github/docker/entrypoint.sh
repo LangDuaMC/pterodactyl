@@ -11,6 +11,9 @@ chmod 777 -R /app/var storage bootstrap/cache
 # Otherwise build one from env vars (mountless mode).
 rm -f /app/.env
 if [ -f /app/var/.env ]; then
+  # Strip lines that aren't valid VAR=value (old entrypoints dumped
+  # env vars like PHP_LDFLAGS with spaces into the file).
+  sed -ni '/^[a-zA-Z_][a-zA-Z0-9_]*=/ p' /app/var/.env
   ln -s /app/var/.env /app/.env
 else
   touch /app/var/.env
