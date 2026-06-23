@@ -80,6 +80,7 @@ export default () => {
     const openEditorTab = ServerContext.useStoreActions((a) => a.files.openEditorTab);
     const setActiveTab = ServerContext.useStoreActions((a) => a.files.setActiveTab);
 
+    const [showMobileTree, setShowMobileTree] = useState(false);
     const [editorContent, setEditorContent] = useState('');
     const [editorMode, setEditorMode] = useState('text/plain');
     const [editorLoading, setEditorLoading] = useState(false);
@@ -152,13 +153,44 @@ export default () => {
             <ErrorBoundary>
                 <BeforeContent />
                 <div css={tw`flex gap-2`} style={{ minHeight: 'calc(100vh - 14rem)' }}>
-                    <div css={tw`flex-shrink-0 bg-neutral-800 rounded overflow-hidden`} style={{ width: '240px' }}>
+                    {/* Desktop sidebar — hidden on mobile */}
+                    <div css={tw`hidden md:block flex-shrink-0 bg-neutral-800 rounded overflow-hidden`} style={{ width: '240px' }}>
                         <div css={tw`px-2 py-1.5 text-xs font-medium text-neutral-300 border-b border-neutral-700`}>
                             Files
                         </div>
                         <FileTree onOpenFile={openFile} />
                     </div>
+
+                    {/* Mobile tree overlay */}
+                    {showMobileTree && (
+                        <div css={tw`fixed inset-0 z-50 md:hidden`} onClick={() => setShowMobileTree(false)}>
+                            <div css={tw`absolute inset-0 bg-black/50`} />
+                            <div css={tw`absolute left-0 top-0 bottom-0 w-64 bg-neutral-800 shadow-xl flex flex-col`} onClick={(e) => e.stopPropagation()}>
+                                <div css={tw`flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-300 border-b border-neutral-700`}>
+                                    <span>Files</span>
+                                    <button type="button" onClick={() => setShowMobileTree(false)} css={tw`text-neutral-500 hover:text-neutral-200`}>
+                                        <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-label="Close tree"><path d="M10 8.586L4.707 3.293a1 1 0 00-1.414 1.414L8.586 10l-5.293 5.293a1 1 0 101.414 1.414L10 11.414l5.293 5.293a1 1 0 001.414-1.414L11.414 10l5.293-5.293a1 1 0 00-1.414-1.414L10 8.586z"/></svg>
+                                    </button>
+                                </div>
+                                <div css={tw`flex-1 overflow-y-auto`}>
+                                    <FileTree onOpenFile={(p, n) => { openFile(p, n); setShowMobileTree(false); }} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div css={tw`flex-1 flex flex-col min-w-0`}>
+                        {/* Mobile toggle button */}
+                        <button
+                            type="button"
+                            css={tw`md:hidden flex items-center gap-1.5 px-2 py-1.5 text-xs text-neutral-400 hover:text-neutral-200 bg-neutral-800 rounded-t border-b border-neutral-700 w-full`}
+                            onClick={() => setShowMobileTree(true)}
+                        >
+                            <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-label="Open file tree">
+                                <path d="M3 5h14a1 1 0 110 2H3a1 1 0 010-2zm0 4h14a1 1 0 110 2H3a1 1 0 010-2zm0 4h14a1 1 0 110 2H3a1 1 0 010-2z" />
+                            </svg>
+                            <span>Files</span>
+                        </button>
                         <TabBar />
                         {activeTab?.type === 'browser' ? (
                             <>
