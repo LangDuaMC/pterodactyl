@@ -26,11 +26,9 @@ class ServerController extends ClientApiController
     {
         $server->loadMissing([
             'tenant',
-            'node',
             'egg',
             'allocations',
             'variables',
-            'subusers',
         ]);
 
         return $this->fractal->item($server)
