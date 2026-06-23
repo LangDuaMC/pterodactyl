@@ -30,6 +30,7 @@ import ChmodFileModal from '@/components/server/files/ChmodFileModal';
 import { Dialog } from '@/components/elements/dialog';
 import Fade from '@/components/elements/Fade';
 import Portal from '@/components/elements/Portal';
+import FileIcon from '@/components/server/files/FileIcon';
 
 import DropdownItems from '@blueprint/components/Server/Files/Browse/DropdownItems';
 
@@ -232,6 +233,12 @@ const ContextMenuHost: React.FC = () => {
                     css={tw`bg-neutral-800 p-2 rounded border border-neutral-700 shadow-lg text-neutral-200`}
                 >
                     <SpinnerOverlay visible={showSpinner} fixed size={'large'} />
+                    {file && (
+                        <div css={tw`flex items-center gap-2 px-2 py-1.5 border-b border-neutral-700 mb-1`}>
+                            <FileIcon name={file.name} isFile={file.isFile} isSymlink={file.isSymlink} isArchive={file.isArchiveType()} size={14} />
+                            <span css={tw`truncate text-xs text-neutral-300`}>{file.name}</span>
+                        </div>
+                    )}
                     {showMenuItems ? (
                         <>
                             <Can action={'file.update'}>
