@@ -1,12 +1,11 @@
 #
-# ── Zero-mount compose ──────────────────────────────────────────────────
+# ── Zero-mount compose ────────────────────────────────────────────────
 # The panel container needs NO persistent volumes other than the DB image.
 #   * Provide APP_KEY and HASHIDS_SALT as env vars (generate once, keep safe).
 #   * If omitted, they are auto-generated but will reset on each restart
 #     (breaking sessions, encryption, and hashid URLs).
-#   * Logs go to stdout via supervisord — capture them with your
-#     container orchestrator (systemd-journald, Docker logs, etc.).
-# ──────────────────────────────────────────────────────────────────────────
+#   * Logs go to stdout via supervisord.
+# ──────────────────────────────────────────────────────────────────────
 services:
   database:
     image: mariadb:11
@@ -19,10 +18,22 @@ services:
       MYSQL_PASSWORD: "CHANGE_ME"
       MYSQL_DATABASE: "panel"
       MYSQL_USER: "pterodactyl"
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent --skip-ssl"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
 
   cache:
     image: redis:alpine
     restart: always
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
   panel:
     build: .
@@ -30,49 +41,54 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - database
-      - cache
+      database:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
     environment:
-      # ── Required ─────────────────────────────────────────────────
       APP_URL: "http://example.com"
       APP_TIMEZONE: "UTC"
       APP_SERVICE_AUTHOR: "noreply@example.com"
 
-      # ── Generate once and keep safe (see below) ──────────────────
+      # Generate once and keep safe (see below)
       # APP_KEY:
       # HASHIDS_SALT:
 
-      # ── Database ─────────────────────────────────────────────────
+      # Database
       DB_HOST: "database"
       DB_PORT: "3306"
       DB_PASSWORD: "CHANGE_ME"
 
-      # ── Redis ────────────────────────────────────────────────────
+      # Redis
       REDIS_HOST: "cache"
       CACHE_STORE: "redis"
       QUEUE_CONNECTION: "redis"
       SESSION_DRIVER: "redis"
 
-      # ── Mail (optional, omit or set your own) ────────────────────
+      # Mail (optional)
       MAIL_FROM: "noreply@example.com"
-      MAIL_DRIVER: "smtp"
+      MAIL_MAILER: "smtp"
       MAIL_HOST: "mail"
       MAIL_PORT: "1025"
       MAIL_USERNAME: ""
       MAIL_PASSWORD: ""
       MAIL_ENCRYPTION: "true"
 
+    # Optional volumes for persistence across image updates:
+    #volumes:
+    #  - panel_var:/app/var        # persists .env + generated keys
+    #  - panel_logs:/app/storage/logs
+
 volumes:
   db_data:
 
 #
-# ── On first deployment ────────────────────────────────────────────────
-#   1. docker compose up -d
-#   2. docker compose exec panel php artisan p:user:make
+# ── First deployment ─────────────────────────────────────────────────
+#   docker compose up -d
+#   docker compose exec panel php artisan p:user:make
 #
-# ── Generating APP_KEY & HASHIDS_SALT ──────────────────────────────────
+# ── Generating APP_KEY & HASHIDS_SALT ────────────────────────────────
 #   APP_KEY=$(head -c 48 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 32)
 #   HASHIDS_SALT=$(head -c 48 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 20)
 #   echo "APP_KEY=$APP_KEY"
 #   echo "HASHIDS_SALT=$HASHIDS_SALT"
-#
