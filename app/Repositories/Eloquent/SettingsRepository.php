@@ -2,11 +2,15 @@
 
 namespace Pterodactyl\Repositories\Eloquent;
 
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Pterodactyl\Models\Setting;
 use Pterodactyl\Contracts\Repository\SettingsRepositoryInterface;
 
 class SettingsRepository extends EloquentRepository implements SettingsRepositoryInterface
 {
+    private const CACHE_KEY = 'settings:all';
+
     private static array $cache = [];
 
     private static array $databaseMiss = [];
@@ -20,15 +24,25 @@ class SettingsRepository extends EloquentRepository implements SettingsRepositor
     }
 
     /**
+     * Return all settings, cached across requests for 24 hours.
+     */
+    public function all(): Collection
+    {
+        return Cache::remember(self::CACHE_KEY, 86400, function () {
+            return parent::all();
+        });
+    }
+
+    /**
      * Store a new persistent setting in the database.
      *
      * @throws \Pterodactyl\Exceptions\Model\DataValidationException
      */
     public function set(string $key, ?string $value = null)
     {
-        // Clear item from the cache.
         $this->clearCache($key);
         $this->withoutFreshModel()->updateOrCreate(['key' => $key], ['value' => $value ?? '']);
+        Cache::forget(self::CACHE_KEY);
 
         self::$cache[$key] = $value;
     }
@@ -38,8 +52,6 @@ class SettingsRepository extends EloquentRepository implements SettingsRepositor
      */
     public function get(string $key, mixed $default = null): mixed
     {
-        // If item has already been requested return it from the cache. If
-        // we already know it is missing, immediately return the default value.
         if (array_key_exists($key, self::$cache)) {
             return self::$cache[$key];
         } elseif (array_key_exists($key, self::$databaseMiss)) {
@@ -62,6 +74,7 @@ class SettingsRepository extends EloquentRepository implements SettingsRepositor
     public function forget(string $key)
     {
         $this->clearCache($key);
+        Cache::forget(self::CACHE_KEY);
         $this->deleteWhere(['key' => $key]);
     }
 

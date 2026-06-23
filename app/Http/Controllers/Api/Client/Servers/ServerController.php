@@ -26,7 +26,8 @@ class ServerController extends ClientApiController
     {
         $server->loadMissing([
             'tenant',
-            'egg',
+            'egg:id,default_port,features,config_from',
+            'egg.configFrom:id,features',
             'allocations',
             'variables',
         ]);

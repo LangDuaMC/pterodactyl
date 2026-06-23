@@ -68,8 +68,13 @@ class ClientController extends ClientApiController
 
         $builder = QueryBuilder::for(
             $query->with(array_merge(
-                $this->getIncludesForTransformer($transformer, ['node']),
-                ['tenant', 'allocations', 'variables', 'egg'],
+                $this->getIncludesForTransformer($transformer),
+                [
+                    'node:id,name,maintenance_mode,daemon_sftp_alias,fqdn,daemonSFTP',
+                    'tenant',
+                    'allocations',
+                    'variables',
+                ],
             ))
         )->allowedFilters([
             'uuid',

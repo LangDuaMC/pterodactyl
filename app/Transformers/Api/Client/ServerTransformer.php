@@ -62,7 +62,9 @@ class ServerTransformer extends BaseClientTransformer
                 'ip' => $server->node->daemon_sftp_alias ?: $server->node->fqdn,
                 'port' => $server->node->daemonSFTP,
             ],
-            'connection' => !is_null($server->egg->default_port) ? "{$server->uuidShort}:{$server->egg->default_port}" : null,
+            'connection' => $server->relationLoaded('egg') && !is_null($server->egg->default_port)
+                ? "{$server->uuidShort}:{$server->egg->default_port}"
+                : null,
             'description' => $server->description,
             'limits' => [
                 'memory' => $server->memory,
@@ -75,7 +77,7 @@ class ServerTransformer extends BaseClientTransformer
             ],
             'invocation' => $service->handle($server, !$user->can(Permission::ACTION_STARTUP_READ, $server)),
             'docker_image' => $server->image,
-            'egg_features' => $server->egg->inherit_features,
+            'egg_features' => $server->relationLoaded('egg') ? $server->egg->inherit_features : null,
             'feature_limits' => [
                 'databases' => $server->database_limit,
                 'allocations' => $server->allocation_limit,
