@@ -67,7 +67,10 @@ class ClientController extends ClientApiController
         }
 
         $builder = QueryBuilder::for(
-            $query->with(array_merge($this->getIncludesForTransformer($transformer, ['node']), ['tenant']))
+            $query->with(array_merge(
+                $this->getIncludesForTransformer($transformer, ['node']),
+                ['tenant', 'allocations', 'variables', 'egg'],
+            ))
         )->allowedFilters([
             'uuid',
             'name',

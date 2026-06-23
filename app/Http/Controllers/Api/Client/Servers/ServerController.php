@@ -24,7 +24,14 @@ class ServerController extends ClientApiController
      */
     public function index(GetServerRequest $request, Server $server): array
     {
-        $server->loadMissing('tenant');
+        $server->loadMissing([
+            'tenant',
+            'node',
+            'egg',
+            'allocations',
+            'variables',
+            'subusers',
+        ]);
 
         return $this->fractal->item($server)
             ->transformWith($this->getTransformer(ServerTransformer::class))
