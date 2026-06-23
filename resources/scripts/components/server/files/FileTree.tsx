@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faChevronRight,
@@ -165,7 +165,7 @@ const TreeNode = React.memo(
 
 const FileTree: React.FC<{
     onOpenFile: (path: string, name: string) => void;
-}> = ({ onOpenFile }) => {
+}> = memo(({ onOpenFile }) => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const directory = ServerContext.useStoreState((state) => state.files.directory);
     const [roots, setRoots] = useState<FileObject[] | null>(null);
@@ -226,6 +226,6 @@ const FileTree: React.FC<{
             ))}
         </TreeContainer>
     );
-};
+});
 
 export default FileTree;

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { memo, useEffect, useRef, useState } from "react";
 import { init, Terminal, FitAddon } from "ghostty-web";
 import SpinnerOverlay from "@/components/elements/SpinnerOverlay";
 import { ServerContext } from "@/state/server";
@@ -38,7 +38,7 @@ const THEME = {
     selectionForeground: "#000000",
 };
 
-export default () => {
+export default memo(() => {
     const containerRef = useRef<HTMLDivElement>(null);
     const termRef = useRef<Terminal | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
@@ -250,4 +250,4 @@ export default () => {
             )}
         </div>
     );
-};
+});

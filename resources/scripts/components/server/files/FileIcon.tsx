@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileAlt, faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { fileExtensionIcons, fileNameIcons, fileFolderIcons } from '@/components/server/files/icon-mappings';
@@ -53,7 +53,7 @@ const getFolderIconName = (name: string): string | null => {
     return null;
 };
 
-const MaterialImg: React.FC<{ iconName: string; size: number; fallback: string }> = ({ iconName, size, fallback }) => {
+const MaterialImg: React.FC<{ iconName: string; size: number; fallback: string }> = memo(({ iconName, size, fallback }) => {
     const [current, setCurrent] = useState(iconName);
     const [failed, setFailed] = useState(false);
 
@@ -85,9 +85,9 @@ const MaterialImg: React.FC<{ iconName: string; size: number; fallback: string }
             }}
         />
     );
-};
+});
 
-const FileIcon: React.FC<Props> = ({ name, isFile, isSymlink, isArchive, isExpanded, size = 16 }) => {
+const FileIcon: React.FC<Props> = memo(({ name, isFile, isSymlink, isArchive, isExpanded, size = 16 }) => {
     if (!isFile) {
         const folderName = getFolderIconName(name);
         const iconName = folderName ? `folder-${folderName}${isExpanded ? '-open' : ''}` : isExpanded ? 'folder-open' : 'folder';
@@ -109,6 +109,6 @@ const FileIcon: React.FC<Props> = ({ name, isFile, isSymlink, isArchive, isExpan
     }
 
     return <MaterialImg iconName='file' size={size} fallback='file' />;
-};
+});
 
 export default FileIcon;
