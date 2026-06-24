@@ -75,7 +75,7 @@ class ServerConfigurationStructureService
                     'ip' => !is_null($server->egg->default_port) ? '0.0.0.0' : ($server->allocation->ip ?? '0.0.0.0'),
                     'port' => $server->egg->default_port ?? ($server->allocation->port ?? 0),
                 ],
-                'mappings' => !is_null($server->egg->default_port) ? [] : $server->getAllocationMappings(),
+                'mappings' => !is_null($server->egg->default_port) ? (object) [] : ($server->getAllocationMappings() ?: (object) []),
             ],
             'mounts' => $server->mounts->map(function (Mount $mount) {
                 return [
