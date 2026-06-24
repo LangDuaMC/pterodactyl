@@ -68,7 +68,7 @@ class WebsocketController extends ClientApiController
         return new JsonResponse([
             'data' => [
                 'token' => $token->toString(),
-                'socket' => $socket . sprintf('/api/servers/%s/ws', $server->uuid),
+                'socket' => $socket . sprintf('/api/servers/%s/ws', $server->identifier),
             ],
         ]);
     }
