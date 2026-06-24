@@ -15,14 +15,14 @@ class EggController extends ApplicationApiController
     public function index(GetEggsRequest $request): array
     {
         $eggs = QueryBuilder::for(Egg::query())
-            ->allowedFilters([
+            ->allowedFilters(
                 'uuid',
                 'name',
                 AllowedFilter::callback('tag', function ($query, $value) {
                     $query->whereJsonContains('tags', $value);
                 }),
-            ])
-            ->allowedSorts(['id', 'name'])
+            )
+            ->allowedSorts('id', 'name')
             ->paginate($request->query('per_page') ?? 50);
 
         return $this->fractal->collection($eggs)

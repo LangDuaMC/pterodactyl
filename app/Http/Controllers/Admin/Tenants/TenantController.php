@@ -21,8 +21,8 @@ class TenantController extends Controller
         }
 
         $tenants = QueryBuilder::for($query)
-            ->allowedFilters(['uuid', 'name'])
-            ->allowedSorts(['id', 'name'])
+            ->allowedFilters('uuid', 'name')
+            ->allowedSorts('id', 'name')
             ->paginate(25);
 
         return view('admin.tenants.index', ['tenants' => $tenants]);

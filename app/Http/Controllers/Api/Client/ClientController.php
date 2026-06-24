@@ -76,13 +76,13 @@ class ClientController extends ClientApiController
                     'variables',
                 ],
             ))
-        )->allowedFilters([
+        )->allowedFilters(
             'uuid',
             'name',
             'description',
             'external_id',
             AllowedFilter::custom('q', new MultiFieldServerFilter()),
-        ]);
+        );
 
         return $builder;
     }

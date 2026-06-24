@@ -30,8 +30,8 @@ class TenantController extends ApplicationApiController
     public function index(GetTenantsRequest $request): array
     {
         $tenants = QueryBuilder::for(Tenant::query())
-            ->allowedFilters(['uuid', 'name'])
-            ->allowedSorts(['id', 'name'])
+            ->allowedFilters('uuid', 'name')
+            ->allowedSorts('id', 'name')
             ->paginate($request->query('per_page') ?? 50);
 
         return $this->fractal->collection($tenants)
