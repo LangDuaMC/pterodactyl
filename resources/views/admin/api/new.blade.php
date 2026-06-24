@@ -33,7 +33,7 @@
                             @foreach($resources as $resource)
                                 <tr>
                                     <td class="strong" style="vertical-align: middle; padding-left: 15px;">
-                                        {{ str_replace('_', ' ', title_case($resource)) }}
+                                        {{ str_replace('_', ' ', Illuminate\Support\Str::title($resource)) }}
                                     </td>
                                     
                                     <td class="text-center" style="vertical-align: middle;">

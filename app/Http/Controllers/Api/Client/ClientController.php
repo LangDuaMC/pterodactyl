@@ -81,7 +81,7 @@ class ClientController extends ClientApiController
             'name',
             'description',
             'external_id',
-            AllowedFilter::custom('*', new MultiFieldServerFilter()),
+            AllowedFilter::custom('q', new MultiFieldServerFilter()),
         ]);
 
         return $builder;

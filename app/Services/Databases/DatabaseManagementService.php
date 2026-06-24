@@ -89,7 +89,7 @@ class DatabaseManagementService
 
         $data = array_merge($data, [
             'server_id' => $server->id,
-            'username' => sprintf('u%d_%s', $server->id, str_random(10)),
+            'username' => sprintf('u%d_%s', $server->id, \Illuminate\Support\Str::random(10)),
             'password' => $this->encrypter->encrypt(
                 Utilities::randomStringWithSpecialCharacters(24)
             ),

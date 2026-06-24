@@ -22,7 +22,7 @@ class ServerController extends Controller
             ->allowedFilters([
                 AllowedFilter::exact('owner_id'),
                 AllowedFilter::exact('tenant_id'),
-                AllowedFilter::custom('*', new AdminServerFilter()),
+                AllowedFilter::custom('q', new AdminServerFilter()),
             ])
             ->paginate(config()->get('pterodactyl.paginate.admin.servers'));
 

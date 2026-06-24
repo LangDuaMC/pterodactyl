@@ -23,10 +23,11 @@ $kernel->bootstrap();
 
 $output = new ConsoleOutput();
 
-$prefix = 'database.connections.' . config('database.default');
-if (!Str::contains(config("$prefix.database"), 'test')) {
+$connection = config('database.default');
+$driver = config("database.connections.$connection.driver");
+if ($driver !== 'sqlite' && !Str::contains(config("database.connections.$connection.database"), 'test')) {
     $output->writeln(PHP_EOL . '<error>Cannot run test process against non-testing database.</error>');
-    $output->writeln(PHP_EOL . '<error>Environment is currently pointed at: "' . config("$prefix.database") . '".</error>');
+    $output->writeln(PHP_EOL . '<error>Environment is currently pointed at: "' . config("database.connections.$connection.database") . '".</error>');
     exit(1);
 }
 

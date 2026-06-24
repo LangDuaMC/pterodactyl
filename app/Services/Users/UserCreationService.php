@@ -39,7 +39,7 @@ class UserCreationService
         $this->connection->beginTransaction();
         if (!isset($data['password']) || empty($data['password'])) {
             $generateResetToken = true;
-            $data['password'] = $this->hasher->make(str_random(30));
+            $data['password'] = $this->hasher->make(\Illuminate\Support\Str::random(30));
         }
 
         /** @var User $user */

@@ -6,7 +6,7 @@
 @endsection
 
 @section('content-header')
-    <h1>{{ $mount->name }}<small>{{ str_limit($mount->description, 75) }}</small></h1>
+    <h1>{{ $mount->name }}<small>{{ Illuminate\Support\Str::limit($mount->description, 75) }}</small></h1>
     <ol class="breadcrumb">
         <li><a href="{{ route('admin.index') }}">Admin</a></li>
         <li><a href="{{ route('admin.mounts') }}">Mounts</a></li>

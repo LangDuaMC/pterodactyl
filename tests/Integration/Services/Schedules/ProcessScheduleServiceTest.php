@@ -56,7 +56,7 @@ class ProcessScheduleServiceTest extends IntegrationTestCase
     /**
      * Test that a job is dispatched as expected using the initial delay.
      */
-    #[\PHPUnit\Framework\Attributes\DataProvider('dispatchNowDataProvider')]
+    #[\PHPUnit\Framework\Attributes\DataProvider('dispatchSyncDataProvider')]
     public function testJobCanBeDispatchedWithExpectedInitialDelay(bool $now)
     {
         Bus::fake();
@@ -74,7 +74,7 @@ class ProcessScheduleServiceTest extends IntegrationTestCase
         Bus::assertDispatched(RunTaskJob::class, function ($job) use ($now, $task) {
             $this->assertInstanceOf(RunTaskJob::class, $job);
             $this->assertSame($task->id, $job->task->id);
-            // Jobs using dispatchNow should not have a delay associated with them.
+            // Jobs dispatched synchronously should not have a delay associated with them.
             $this->assertSame($now ? null : 10, $job->delay);
 
             return true;
@@ -147,7 +147,7 @@ class ProcessScheduleServiceTest extends IntegrationTestCase
         $this->assertDatabaseHas('tasks', ['id' => $task->id, 'is_queued' => false]);
     }
 
-    public static function dispatchNowDataProvider(): array
+    public static function dispatchSyncDataProvider(): array
     {
         return [[true], [false]];
     }

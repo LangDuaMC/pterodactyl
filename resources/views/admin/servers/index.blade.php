@@ -21,7 +21,7 @@
                 <div class="box-tools search01">
                     <form action="{{ route('admin.servers') }}" method="GET">
                         <div class="input-group input-group-sm">
-                            <input type="text" name="filter[*]" class="form-control pull-right" value="{{ request()->input()['filter']['*'] ?? '' }}" placeholder="Search Servers">
+                            <input type="text" name="filter[q]" class="form-control pull-right" value="{{ request()->input()['filter']['q'] ?? '' }}" placeholder="Search Servers">
                             <div class="input-group-btn">
                                 <button type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
                                 <a href="{{ route('admin.servers.new') }}"><button type="button" class="btn btn-sm btn-primary" style="border-radius: 0 3px 3px 0;margin-left:-1px;">Create New</button></a>

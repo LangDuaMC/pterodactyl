@@ -21,7 +21,7 @@ export default ({ query, ...params }: QueryParams): Promise<PaginatedServerRespo
     return new Promise((resolve, reject) => {
         http.get('/api/client', {
             params: {
-                'filter[*]': query,
+                'filter[q]': query,
                 ...params,
             },
         })

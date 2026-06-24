@@ -21,7 +21,7 @@ trait AvailableLanguages
             $code = basename($path);
             $value = $localize ? $this->getIsoInstance()->nativeByCode1($code) : $this->getIsoInstance()->languageByCode1($code);
 
-            return [$code => title_case($value)];
+            return [$code => \Illuminate\Support\Str::title($value)];
         })->toArray();
     }
 
