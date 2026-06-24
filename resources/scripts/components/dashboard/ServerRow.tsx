@@ -103,7 +103,7 @@ const getDefaultAddress = (server: Server): string => {
     const allocation = getDefaultAllocation(server);
 
     if (!allocation) {
-        return 'No default port';
+        return server.connection || 'No default port';
     }
 
     return `${allocation.alias || ip(allocation.ip)}:${allocation.port}`;

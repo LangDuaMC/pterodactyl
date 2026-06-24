@@ -5,6 +5,7 @@ namespace Pterodactyl\Models;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Query\JoinClause;
 use Znck\Eloquent\Traits\BelongsToThrough;
+use ParagonIE\ConstantTime\Base32;
 use Pterodactyl\Contracts\Models\Identifiable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Pterodactyl\Exceptions\Http\Server\ServerStateConflictException;
 
 /**
@@ -44,6 +46,7 @@ use Pterodactyl\Exceptions\Http\Server\ServerStateConflictException;
  * @property int|null $allocation_limit
  * @property int|null $database_limit
  * @property int $backup_limit
+ * @property string $shortUuid
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $installed_at
@@ -202,6 +205,13 @@ class Server extends Model implements Identifiable
         'deleted_at' => 'datetime',
         'installed_at' => 'datetime',
     ];
+
+    protected function shortUuid(): Attribute
+    {
+        return Attribute::get(function () {
+            return strtolower(substr(Base32::encodeUnpadded(sha1($this->uuid, true)), 0, 10));
+        });
+    }
 
     /**
      * Returns the format for server allocations when communicating with the Daemon.

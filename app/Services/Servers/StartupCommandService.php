@@ -14,7 +14,7 @@ class StartupCommandService
         $find = ['{{SERVER_MEMORY}}', '{{SERVER_IP}}', '{{SERVER_PORT}}'];
         $replace = [
             $server->memory,
-            $server->allocation?->ip ?? $server->egg?->default_port ? $server->uuidShort : '0.0.0.0',
+            $server->shortUuid.'.lo',
             $server->allocation?->port ?? $server->egg?->default_port ?? '0',
         ];
 

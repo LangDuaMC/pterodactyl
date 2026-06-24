@@ -63,7 +63,7 @@ class ServerTransformer extends BaseClientTransformer
                 'port' => $server->node->daemonSFTP,
             ],
             'connection' => $server->relationLoaded('egg') && !is_null($server->egg->default_port)
-                ? "{$server->uuidShort}:{$server->egg->default_port}"
+                ? "{$server->shortUuid}.lo:{$server->egg->default_port}"
                 : null,
             'description' => $server->description,
             'limits' => [

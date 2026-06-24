@@ -72,7 +72,7 @@ class ServerConfigurationStructureService
             'allocations' => [
                 'force_outgoing_ip' => !is_null($server->egg->default_port) ? false : $server->egg->force_outgoing_ip,
                 'default' => [
-                    'ip' => !is_null($server->egg->default_port) ? '0.0.0.0' : ($server->allocation->ip ?? '0.0.0.0'),
+                    'ip' => !is_null($server->egg->default_port) ? $server->shortUuid.'.lo' : ($server->allocation->ip ?? $server->shortUuid.'.lo'),
                     'port' => $server->egg->default_port ?? ($server->allocation->port ?? 0),
                 ],
                 'mappings' => !is_null($server->egg->default_port) ? (object) [] : ($server->getAllocationMappings() ?: (object) []),
@@ -103,7 +103,7 @@ class ServerConfigurationStructureService
             'uuid' => $server->uuid,
             'build' => [
                 'default' => [
-                    'ip' => $server->egg->default_port ?? ($server->allocation->ip ?? '0.0.0.0'),
+                    'ip' => $server->egg->default_port ?? ($server->allocation->ip ?? $server->shortUuid.'.lo'),
                     'port' => $server->egg->default_port ?? ($server->allocation->port ?? 0),
                 ],
                 'ports' => !is_null($server->egg->default_port) ? [] : $server->allocations->groupBy('ip')->map(function ($item) {
