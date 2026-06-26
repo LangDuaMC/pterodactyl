@@ -65,6 +65,9 @@ class ServerTransformer extends BaseClientTransformer
             'connection' => $server->relationLoaded('egg') && !is_null($server->egg->default_port)
                 ? "{$server->shortUuid}.lo:{$server->egg->default_port}"
                 : null,
+            'aliases' => [
+                $server->shortUuid . '.lo',
+            ],
             'description' => $server->description,
             'limits' => [
                 'memory' => $server->memory,

@@ -68,6 +68,9 @@ class ServerConfigurationStructureService
                 // TODO: remove this key in V2.
                 'oom_disabled' => $server->oom_disabled,
                 'requires_rebuild' => false,
+                'aliases' => [
+                    $server->shortUuid . '.lo',
+                ],
             ],
             'allocations' => [
                 'force_outgoing_ip' => !is_null($server->egg->default_port) ? false : $server->egg->force_outgoing_ip,
