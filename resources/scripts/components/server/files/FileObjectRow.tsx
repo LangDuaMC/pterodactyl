@@ -43,11 +43,29 @@ const Clickable: React.FC<{ file: FileObject }> = memo(
         const directory = ServerContext.useStoreState((state) => state.files.directory);
         const navigateBrowserTab = ServerContext.useStoreActions((a) => a.files.navigateBrowserTab);
         const openEditorTab = ServerContext.useStoreActions((a) => a.files.openEditorTab);
+        const openImageTab = ServerContext.useStoreActions((a) => a.files.openImageTab);
 
         const canClick = file.isFile ? canReadContents : canRead;
 
         if (!canClick) {
             return <div className={styles.details}>{children}</div>;
+        }
+
+        if (file.isFile && file.isImage()) {
+            return (
+                <div
+                    className={styles.details}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                        openImageTab({
+                            path: join(directory, file.name),
+                            name: file.name,
+                        });
+                    }}
+                >
+                    {children}
+                </div>
+            );
         }
 
         if (file.isFile) {

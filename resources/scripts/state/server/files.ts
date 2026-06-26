@@ -8,7 +8,7 @@ export interface FileUploadData {
 
 export interface Tab {
     id: string;
-    type: 'browser' | 'editor';
+    type: 'browser' | 'editor' | 'image';
     path: string;
     name: string;
     mode?: string;
@@ -20,11 +20,13 @@ export interface ServerFileStore {
     directory: string;
     selectedFiles: string[];
     uploads: Record<string, FileUploadData>;
+    viewMode: 'list' | 'grid';
 
     setDirectory: Action<ServerFileStore, string>;
     setSelectedFiles: Action<ServerFileStore, string[]>;
     appendSelectedFile: Action<ServerFileStore, string>;
     removeSelectedFile: Action<ServerFileStore, string>;
+    setViewMode: Action<ServerFileStore, 'list' | 'grid'>;
 
     pushFileUpload: Action<ServerFileStore, { name: string; data: FileUploadData }>;
     setUploadProgress: Action<ServerFileStore, { name: string; loaded: number }>;
@@ -34,6 +36,7 @@ export interface ServerFileStore {
 
     openBrowserTab: Action<ServerFileStore, string>;
     openEditorTab: Action<ServerFileStore, { path: string; name: string; mode: string }>;
+    openImageTab: Action<ServerFileStore, { path: string; name: string }>;
     closeTab: Action<ServerFileStore, string>;
     setActiveTab: Action<ServerFileStore, string>;
     navigateBrowserTab: Action<ServerFileStore, string>;
@@ -53,6 +56,7 @@ const files: ServerFileStore = {
     directory: '/',
     selectedFiles: [],
     uploads: {},
+    viewMode: 'list',
 
     setDirectory: action((state, payload) => {
         state.directory = payload;
@@ -68,6 +72,10 @@ const files: ServerFileStore = {
 
     removeSelectedFile: action((state, payload) => {
         state.selectedFiles = state.selectedFiles.filter((f) => f !== payload);
+    }),
+
+    setViewMode: action((state, payload) => {
+        state.viewMode = payload;
     }),
 
     pushFileUpload: action((state, payload) => {
@@ -112,6 +120,12 @@ const files: ServerFileStore = {
     openEditorTab: action((state, { path, name, mode }) => {
         const id = uniqueId();
         state.tabs = [...state.tabs, { id, type: 'editor', path, name, mode }];
+        state.activeTabId = id;
+    }),
+
+    openImageTab: action((state, { path, name }) => {
+        const id = uniqueId();
+        state.tabs = [...state.tabs, { id, type: 'image', path, name }];
         state.activeTabId = id;
     }),
 

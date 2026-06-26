@@ -176,7 +176,8 @@ class FileController extends ClientApiController
     {
         $file = $this->fileRepository->setServer($server)->compressFiles(
             $request->input('root'),
-            $request->input('files')
+            $request->input('files'),
+            $request->input('format')
         );
 
         Activity::event('server:file.compress')

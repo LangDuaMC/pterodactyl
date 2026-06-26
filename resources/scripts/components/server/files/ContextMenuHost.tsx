@@ -10,12 +10,15 @@ import {
     faLevelUpAlt,
     faPencilAlt,
     faTrashAlt,
+    faTrashRestore,
+    faDumpster,
     IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 import { FileObject } from '@/api/server/files/loadDirectory';
 import { ServerContext } from '@/state/server';
 import { join } from 'pathe';
 import deleteFiles from '@/api/server/files/deleteFiles';
+import renameFiles from '@/api/server/files/renameFiles';
 import SpinnerOverlay from '@/components/elements/SpinnerOverlay';
 import copyFile from '@/api/server/files/copyFile';
 import Can from '@/components/elements/Can';
@@ -29,6 +32,8 @@ import decompressFiles from '@/api/server/files/decompressFiles';
 import RenameFileModal from '@/components/server/files/RenameFileModal';
 import ChmodFileModal from '@/components/server/files/ChmodFileModal';
 import { Dialog } from '@/components/elements/dialog';
+import Select from '@/components/elements/Select';
+import { Button } from '@/components/elements/button/index';
 import Fade from '@/components/elements/Fade';
 import Portal from '@/components/elements/Portal';
 import FileIcon from '@/components/server/files/FileIcon';
@@ -62,6 +67,9 @@ const ContextMenuHost: React.FC = () => {
     const [showSpinner, setShowSpinner] = useState(false);
     const [modal, setModal] = useState<ModalType | null>(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [showCompressDialog, setShowCompressDialog] = useState(false);
+    const [compressFormat, setCompressFormat] = useState('tar.gz');
     const [modalFile, setModalFile] = useState<FileObject | null>(null);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -70,11 +78,13 @@ const ContextMenuHost: React.FC = () => {
     const openBrowserTab = ServerContext.useStoreActions((a) => a.files.openBrowserTab);
     const { mutate } = useFileManagerSwr();
     const { clearAndAddHttpError, clearFlashes } = useFlash();
+    const isInTrash = directory === '.trash' || directory.startsWith('.trash/');
 
     const close = useCallback(() => {
         setTarget(null);
         setModal(null);
         setShowConfirmation(false);
+        setShowDeleteConfirmation(false);
         setModalFile(null);
     }, []);
 
@@ -144,9 +154,15 @@ const ContextMenuHost: React.FC = () => {
 
     const doArchive = () => {
         if (!file) return;
+        setShowCompressDialog(true);
+    };
+
+    const doArchiveWithFormat = () => {
+        if (!file) return;
+        setShowCompressDialog(false);
         setShowSpinner(true);
         clearFlashes('files');
-        compressFiles(uuid, directory, [file.name])
+        compressFiles(uuid, directory, [file.name], compressFormat)
             .then(() => mutate())
             .catch((error) => clearAndAddHttpError({ key: 'files', error }))
             .then(() => { setShowSpinner(false); close(); });
@@ -157,6 +173,40 @@ const ContextMenuHost: React.FC = () => {
         setShowSpinner(true);
         clearFlashes('files');
         decompressFiles(uuid, directory, file.name)
+            .then(() => mutate())
+            .catch((error) => clearAndAddHttpError({ key: 'files', error }))
+            .then(() => { setShowSpinner(false); close(); });
+    };
+
+    const doMoveToTrash = () => {
+        if (!file) return;
+        setShowSpinner(true);
+        clearFlashes('files');
+
+        const root = '/';
+        renameFiles(uuid, root, [{
+            from: directory === '/' ? file.name : directory.replace(/^\//, '') + '/' + file.name,
+            to: '.trash/' + file.name,
+        }])
+            .then(() => mutate())
+            .catch((error) => clearAndAddHttpError({ key: 'files', error }))
+            .then(() => { setShowSpinner(false); close(); });
+    };
+
+    const doRestore = () => {
+        if (!file) return;
+        setShowSpinner(true);
+        clearFlashes('files');
+
+        const root = '/';
+        const trashRelative = directory === '.trash'
+            ? file.name
+            : directory.replace(/^\.trash\//, '') + '/' + file.name;
+        const restoreDir = directory.replace(/^\.trash\/?/, '') || '';
+        renameFiles(uuid, root, [{
+            from: '.trash/' + trashRelative,
+            to: restoreDir ? restoreDir + '/' + file.name : file.name,
+        }])
             .then(() => mutate())
             .catch((error) => clearAndAddHttpError({ key: 'files', error }))
             .then(() => { setShowSpinner(false); close(); });
@@ -178,17 +228,46 @@ const ContextMenuHost: React.FC = () => {
 
     return (
         <>
-            {(modal || showConfirmation) && file && (
+            {(modal || showConfirmation || showDeleteConfirmation || showCompressDialog) && file && (
                 <>
+                    <Dialog
+                        open={showCompressDialog}
+                        title={'Compress File'}
+                        onClose={() => setShowCompressDialog(false)}
+                    >
+                        <p css={tw`text-sm text-neutral-300 mb-4`}>
+                            Compress <span className={'font-semibold text-gray-50'}>{file.name}</span> into an archive.
+                        </p>
+                        <label css={tw`block text-sm text-neutral-200 mb-1`}>Format</label>
+                        <Select value={compressFormat} onChange={(e) => setCompressFormat(e.currentTarget.value)}>
+                            <option value={'tar.gz'}>tar.gz</option>
+                            <option value={'zip'}>ZIP</option>
+                            <option value={'tar.bz2'}>tar.bz2</option>
+                            <option value={'tar.xz'}>tar.xz</option>
+                        </Select>
+                        <Dialog.Footer>
+                            <Button.Text onClick={() => setShowCompressDialog(false)}>Cancel</Button.Text>
+                            <Button onClick={doArchiveWithFormat}>Compress</Button>
+                        </Dialog.Footer>
+                    </Dialog>
                     <Dialog.Confirm
                         open={showConfirmation}
                         onClose={() => setShowConfirmation(false)}
+                        title={'Move to Trash'}
+                        confirm={'Move to Trash'}
+                        onConfirmed={doMoveToTrash}
+                    >
+                        Move <span className={'font-semibold text-gray-50'}>{file.name}</span> to the trash?
+                    </Dialog.Confirm>
+                    <Dialog.Confirm
+                        open={showDeleteConfirmation}
+                        onClose={() => setShowDeleteConfirmation(false)}
                         title={`Delete ${file.isFile ? 'File' : 'Directory'}`}
-                        confirm={'Delete'}
+                        confirm={'Permanently Delete'}
                         onConfirmed={doDeletion}
                     >
                         You will not be able to recover the contents of{' '}
-                        <span className={'font-semibold text-gray-50'}>{file.name}</span> once deleted.
+                        <span className={'font-semibold text-gray-50'}>{file.name}</span> once permanently deleted.
                     </Dialog.Confirm>
                     {modal === 'chmod' ? (
                         <ChmodFileModal
@@ -232,48 +311,73 @@ const ContextMenuHost: React.FC = () => {
                     )}
                     {showMenuItems ? (
                         <>
-                            {!file.isFile && (
-                                <ItemIcon
-                                    icon={faExternalLinkAlt}
-                                    title={'Open in new tab'}
-                                    onClick={() => {
-                                        openBrowserTab(join(directory, file.name));
-                                        close();
-                                    }}
-                                />
-                            )}
-                            <Can action={'file.update'}>
-                                <ItemIcon icon={faPencilAlt} title={'Rename'} onClick={() => openModal('rename')} />
-                                <ItemIcon icon={faLevelUpAlt} title={'Move'} onClick={() => openModal('move')} />
-                                <ItemIcon icon={faFileCode} title={'Permissions'} onClick={() => openModal('chmod')} />
-                            </Can>
-                            {file.isFile && (
-                                <Can action={'file.create'}>
-                                    <ItemIcon icon={faCopy} title={'Copy'} onClick={doCopy} />
-                                </Can>
-                            )}
-                            {file.isArchiveType() ? (
-                                <Can action={'file.create'}>
-                                    <ItemIcon icon={faBoxOpen} title={'Unarchive'} onClick={doUnarchive} />
-                                </Can>
+                            {isInTrash ? (
+                                <>
+                                    <Can action={'file.update'}>
+                                        <ItemIcon icon={faTrashRestore} title={'Restore'} onClick={doRestore} />
+                                    </Can>
+                                    <Can action={'file.delete'}>
+                                        <ItemIcon icon={faTrashAlt} title={'Delete Permanently'} $danger onClick={() => { setShowDeleteConfirmation(true); setTarget(null); }} />
+                                    </Can>
+                                </>
                             ) : (
-                                <Can action={'file.archive'}>
-                                    <ItemIcon icon={faFileArchive} title={'Archive'} onClick={doArchive} />
-                                </Can>
+                                <>
+                                    {!file.isFile && (
+                                        <ItemIcon
+                                            icon={faExternalLinkAlt}
+                                            title={'Open in new tab'}
+                                            onClick={() => {
+                                                openBrowserTab(join(directory, file.name));
+                                                close();
+                                            }}
+                                        />
+                                    )}
+                                    <Can action={'file.update'}>
+                                        <ItemIcon icon={faPencilAlt} title={'Rename'} onClick={() => openModal('rename')} />
+                                        <ItemIcon icon={faLevelUpAlt} title={'Move'} onClick={() => openModal('move')} />
+                                        <ItemIcon icon={faFileCode} title={'Permissions'} onClick={() => openModal('chmod')} />
+                                    </Can>
+                                    {file.isFile && (
+                                        <Can action={'file.create'}>
+                                            <ItemIcon icon={faCopy} title={'Copy'} onClick={doCopy} />
+                                        </Can>
+                                    )}
+                                    {file.isArchiveType() ? (
+                                        <Can action={'file.create'}>
+                                            <ItemIcon icon={faBoxOpen} title={'Unarchive'} onClick={doUnarchive} />
+                                        </Can>
+                                    ) : (
+                                        <Can action={'file.archive'}>
+                                            <ItemIcon icon={faFileArchive} title={'Archive'} onClick={doArchive} />
+                                        </Can>
+                                    )}
+                                    {file.isFile && <ItemIcon icon={faFileDownload} title={'Download'} onClick={doDownload} />}
+                                    <Can action={'file.delete'}>
+                                        <ItemIcon
+                                            icon={faTrashAlt}
+                                            title={'Move to Trash'}
+                                            $danger
+                                            onClick={() => {
+                                                if (target) setModalFile(target.file);
+                                                setShowConfirmation(true);
+                                                setTarget(null);
+                                            }}
+                                        />
+                                    </Can>
+                                    <Can action={'file.delete'}>
+                                        <ItemIcon
+                                            icon={faDumpster}
+                                            title={'Delete Permanently'}
+                                            $danger
+                                            onClick={() => {
+                                                if (target) setModalFile(target.file);
+                                                setShowDeleteConfirmation(true);
+                                                setTarget(null);
+                                            }}
+                                        />
+                                    </Can>
+                                </>
                             )}
-                            {file.isFile && <ItemIcon icon={faFileDownload} title={'Download'} onClick={doDownload} />}
-                            <Can action={'file.delete'}>
-                                <ItemIcon
-                                    icon={faTrashAlt}
-                                    title={'Delete'}
-                                    $danger
-                                    onClick={() => {
-                                        if (target) setModalFile(target.file);
-                                        setShowConfirmation(true);
-                                        setTarget(null);
-                                    }}
-                                />
-                            </Can>
                         </>
                     ) : null}
                     <DropdownItems />

@@ -41,3 +41,5 @@ database/build_sqlite_schema.php
 data/
 .playwright-mcp/
 /public/icons
+.opencode
+graphify-out

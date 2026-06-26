@@ -21,6 +21,7 @@ class CompressFilesRequest extends ClientApiRequest
             'root' => 'sometimes|nullable|string',
             'files' => 'required|array',
             'files.*' => 'string',
+            'format' => 'sometimes|nullable|string|in:tar.gz,zip,tar.bz2,tar.xz',
         ];
     }
 }

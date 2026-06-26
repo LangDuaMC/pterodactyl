@@ -3,9 +3,11 @@ import { httpErrorToHuman } from '@/api/http';
 import { CSSTransition } from 'react-transition-group';
 import Spinner from '@/components/elements/Spinner';
 import FileObjectRow from '@/components/server/files/FileObjectRow';
+import FileGrid from '@/components/server/files/FileGrid';
 import FileManagerBreadcrumbs from '@/components/server/files/FileManagerBreadcrumbs';
 import { FileObject } from '@/api/server/files/loadDirectory';
 import NewDirectoryButton from '@/components/server/files/NewDirectoryButton';
+import PullFileModal from '@/components/server/files/PullFileModal';
 import { NavLink } from 'react-router-dom';
 import Can from '@/components/elements/Can';
 import { ServerError } from '@/components/elements/ScreenBlock';
@@ -18,14 +20,18 @@ import MassActionsBar from '@/components/server/files/MassActionsBar';
 import UploadButton from '@/components/server/files/UploadButton';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import { useStoreActions } from '@/state/hooks';
+import useFlash from '@/plugins/useFlash';
 import ErrorBoundary from '@/components/elements/ErrorBoundary';
 import { FileActionCheckbox } from '@/components/server/files/SelectFileCheckbox';
 import getFileContents from '@/api/server/files/getFileContents';
 import saveFileContents from '@/api/server/files/saveFileContents';
+import deleteFiles from '@/api/server/files/deleteFiles';
 import CodemirrorEditor from '@/components/elements/CodemirrorEditor';
+import ImageViewer from '@/components/server/files/ImageViewer';
 import FileTree from '@/components/server/files/FileTree';
 import TabBar from '@/components/server/files/TabBar';
 import ContextMenuHost from '@/components/server/files/ContextMenuHost';
+import { Dialog } from '@/components/elements/dialog';
 import Select from '@/components/elements/Select';
 import modes from '@/modes';
 import { encodePathSegments, hashToPath } from '@/helpers';
@@ -86,6 +92,8 @@ export default () => {
     const [editorLoading, setEditorLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const fetchFileContentRef = useRef<(() => Promise<string>) | null>(null);
+    const viewMode = ServerContext.useStoreState((state) => state.files.viewMode);
+    const setViewMode = ServerContext.useStoreActions((actions) => actions.files.setViewMode);
 
     const skipHashSync = useRef(false);
 
@@ -146,7 +154,22 @@ export default () => {
             .finally(() => setSaving(false));
     }, [uuid, activeTab?.id, activeTab?.type]);
 
+    const isInTrash = directory === '.trash' || directory.startsWith('.trash/');
     const showEditor = activeTab?.type === 'editor';
+
+    const { clearFlashes: clearFileFlashes, clearAndAddHttpError } = useFlash();
+    const [showEmptyTrashConfirm, setShowEmptyTrashConfirm] = useState(false);
+
+    const emptyTrash = () => {
+        if (!files || files.length === 0) return;
+        setShowEmptyTrashConfirm(false);
+        setSaving(true);
+        clearFileFlashes('files');
+        deleteFiles(uuid, directory, files.map((f) => f.name))
+            .then(() => mutate())
+            .catch((error) => clearAndAddHttpError({ key: 'files', error }))
+            .then(() => setSaving(false));
+    };
 
     return (
         <ServerContentBlock title={'File Manager'} showFlashKey={'files'}>
@@ -212,6 +235,15 @@ export default () => {
                                         <div className={'grid grid-cols-2 sm:grid-cols-3 w-full gap-4 mb-4 md:flex md:flex-1 md:justify-end md:mb-0'}>
                                             <FileManagerStatus />
                                             <FileButtons />
+                                            <button
+                                                type={'button'}
+                                                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                                                css={tw`px-3 py-2 text-xs font-medium rounded bg-neutral-700 hover:bg-neutral-600 text-neutral-200 transition-colors`}
+                                                title={viewMode === 'grid' ? 'List view' : 'Grid view'}
+                                            >
+                                                {viewMode === 'grid' ? 'List' : 'Grid'}
+                                            </button>
+                                            <PullFileModal />
                                             <NewDirectoryButton />
                                             <UploadButton />
                                             <NavLink to={`/server/${id}/files/new#${encodePathSegments(directory)}`}>
@@ -220,6 +252,23 @@ export default () => {
                                         </div>
                                     </Can>
                                 </div>
+                                {isInTrash && (
+                                    <div css={tw`rounded bg-red-900/30 border border-red-700 mb-2 p-3 flex items-center justify-between`}>
+                                        <div>
+                                            <p css={tw`text-red-200 text-sm font-medium`}>Trash</p>
+                                            <p css={tw`text-red-300 text-xs`}>
+                                                Files moved here are kept until you permanently delete them.
+                                            </p>
+                                        </div>
+                                        <Button.Danger
+                                            variant={Button.Variants.Secondary}
+                                            onClick={() => setShowEmptyTrashConfirm(true)}
+                                            disabled={!files || files.length === 0}
+                                        >
+                                            Empty Trash
+                                        </Button.Danger>
+                                    </div>
+                                )}
                                 {!files ? (
                                     <Spinner size={'large'} centered />
                                 ) : (
@@ -239,24 +288,42 @@ export default () => {
                                                             </p>
                                                         </div>
                                                     )}
-                                                    {sortFiles(files.slice(0, 250)).map((file) => (
-                                                        <FileObjectRow
-                                                            key={file.key}
-                                                            file={file}
-                                                            onOpenFile={
-                                                                file.isFile && file.isEditable()
-                                                                    ? (p, n) => openFile(p, n)
-                                                                    : undefined
-                                                            }
+                                                    {viewMode === 'grid' ? (
+                                                        <FileGrid
+                                                            files={sortFiles(files.slice(0, 250))}
+                                                            onOpenFile={openFile}
                                                         />
-                                                    ))}
+                                                    ) : (
+                                                        sortFiles(files.slice(0, 250)).map((file) => (
+                                                            <FileObjectRow
+                                                                key={file.key}
+                                                                file={file}
+                                                                onOpenFile={
+                                                                    file.isFile && file.isEditable()
+                                                                        ? (p, n) => openFile(p, n)
+                                                                        : undefined
+                                                                }
+                                                            />
+                                                        ))
+                                                    )}
                                                     <MassActionsBar />
                                                 </div>
                                             </CSSTransition>
                                         )}
                                     </>
                                 )}
+                                <Dialog.Confirm
+                                    open={showEmptyTrashConfirm}
+                                    onClose={() => setShowEmptyTrashConfirm(false)}
+                                    title={'Empty Trash'}
+                                    confirm={'Empty Trash'}
+                                    onConfirmed={emptyTrash}
+                                >
+                                    Permanently delete all files in the trash? This cannot be undone.
+                                </Dialog.Confirm>
                             </>
+                        ) : activeTab?.type === 'image' ? (
+                            activeTab && <ImageViewer path={activeTab.path} name={activeTab.name} />
                         ) : showEditor ? (
                             <div>
                                 <div css={tw`bg-neutral-800 rounded-b border-t border-neutral-700 relative`}>

@@ -2,10 +2,13 @@ import { FileObject } from '@/api/server/files/loadDirectory';
 import http from '@/api/http';
 import { rawDataToFileObject } from '@/api/transformers';
 
-export default async (uuid: string, directory: string, files: string[]): Promise<FileObject> => {
+export default async (uuid: string, directory: string, files: string[], format?: string): Promise<FileObject> => {
+    const payload: Record<string, unknown> = { root: directory, files };
+    if (format) payload.format = format;
+
     const { data } = await http.post(
         `/api/client/servers/${uuid}/files/compress`,
-        { root: directory, files },
+        payload,
         {
             timeout: 60000,
             timeoutErrorMessage:

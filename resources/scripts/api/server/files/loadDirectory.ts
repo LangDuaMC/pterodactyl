@@ -13,6 +13,7 @@ export interface FileObject {
     createdAt: Date;
     modifiedAt: Date;
     isArchiveType: () => boolean;
+    isImage: () => boolean;
     isEditable: () => boolean;
 }
 

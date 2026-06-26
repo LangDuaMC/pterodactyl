@@ -45,10 +45,15 @@ export const rawDataToFileObject = (data: FractalResponseData): FileObject => ({
         );
     },
 
-    isEditable: function () {
-        if (this.isArchiveType() || !this.isFile) return false;
+    isImage: function () {
+        if (!this.isFile) return false;
+        return /^image\/(?!svg\+xml)/.test(this.mimetype);
+    },
 
-        const matches = ['application/jar', 'application/octet-stream', 'inode/directory', /^image\/(?!svg\+xml)/];
+    isEditable: function () {
+        if (this.isArchiveType() || !this.isFile || this.isImage()) return false;
+
+        const matches = ['application/jar', 'application/octet-stream', 'inode/directory'];
 
         return matches.every((m) => !this.mimetype.match(m));
     },

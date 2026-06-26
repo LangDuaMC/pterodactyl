@@ -195,18 +195,24 @@ class DaemonFileRepository extends DaemonRepository
      *
      * @throws DaemonConnectionException
      */
-    public function compressFiles(?string $root, array $files): array
+    public function compressFiles(?string $root, array $files, ?string $format = null): array
     {
         Assert::isInstanceOf($this->server, Server::class);
+
+        $payload = [
+            'root' => $root ?? '/',
+            'files' => $files,
+        ];
+
+        if ($format !== null) {
+            $payload['format'] = $format;
+        }
 
         try {
             $response = $this->getHttpClient()->post(
                 sprintf('/api/servers/%s/files/compress', $this->server->uuid),
                 [
-                    'json' => [
-                        'root' => $root ?? '/',
-                        'files' => $files,
-                    ],
+                    'json' => $payload,
                     // Wait for up to 15 minutes for the archive to be completed when calling this endpoint
                     // since it will likely take quite awhile for large directories.
                     'timeout' => 60 * 15,
