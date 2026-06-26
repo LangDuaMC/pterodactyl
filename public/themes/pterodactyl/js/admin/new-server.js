@@ -57,10 +57,11 @@ $('#pNodeId').on('change', function () {
     currentNode = $(this).val();
     $.each(Pterodactyl.nodeData, function (i, v) {
         if (v.id == currentNode) {
+            let options = [{ id: '', text: 'No Allocation' }].concat(v.allocations);
             $('#pAllocation').html('').select2({
-                data: v.allocations,
+                data: options,
                 placeholder: 'Select a Default Allocation',
-            });
+            }).val('').trigger('change');
 
             updateAdditionalAllocations();
         }

@@ -25,7 +25,7 @@ const Tab = styled.div<{ active: boolean }>`
 `;
 
 const CloseButton = styled.span`
-    ${tw`ml-1 p-0.5 rounded hover:bg-neutral-600 text-neutral-500 hover:text-neutral-200 leading-none`}
+    ${tw`ml-1.5 p-1 rounded hover:bg-neutral-600 text-neutral-500 hover:text-neutral-200 leading-none`}
 `;
 
 const TabBar: React.FC = () => {
@@ -60,7 +60,7 @@ const TabBar: React.FC = () => {
                             closeTab(tab.id);
                         }}
                     >
-                        <FontAwesomeIcon icon={faTimes} size='xs' />
+                        <FontAwesomeIcon icon={faTimes} size='sm' />
                     </CloseButton>
                 </Tab>
             ))}
