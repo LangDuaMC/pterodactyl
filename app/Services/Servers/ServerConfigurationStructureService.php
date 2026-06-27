@@ -61,6 +61,9 @@ class ServerConfigurationStructureService
                 'disk_space' => $server->disk,
                 'oom_disabled' => $server->oom_disabled,
             ],
+            'aliases' => [
+                $server->shortUuid . '.lo',
+            ],
             'container' => [
                 'image' => $server->image,
                 // This field is deprecated — use the value in the "build" block.
@@ -68,17 +71,14 @@ class ServerConfigurationStructureService
                 // TODO: remove this key in V2.
                 'oom_disabled' => $server->oom_disabled,
                 'requires_rebuild' => false,
-                'aliases' => [
-                    $server->shortUuid . '.lo',
-                ],
             ],
             'allocations' => [
-                'force_outgoing_ip' => !is_null($server->egg->default_port) ? false : $server->egg->force_outgoing_ip,
+                'force_outgoing_ip' => is_null($server->allocation) ? false : $server->egg->force_outgoing_ip,
                 'default' => [
-                    'ip' => !is_null($server->egg->default_port) ? $server->shortUuid.'.lo' : ($server->allocation->ip ?? $server->shortUuid.'.lo'),
-                    'port' => $server->egg->default_port ?? ($server->allocation->port ?? 0),
+                    'ip' => $server->allocation->ip ?? $server->shortUuid.'.lo',
+                    'port' => $server->allocation->port ?? $server->egg->default_port ?? 0,
                 ],
-                'mappings' => !is_null($server->egg->default_port) ? (object) [] : ($server->getAllocationMappings() ?: (object) []),
+                'mappings' => is_null($server->allocation) ? (object) [] : ($server->getAllocationMappings() ?: (object) []),
             ],
             'mounts' => $server->mounts->map(function (Mount $mount) {
                 return [

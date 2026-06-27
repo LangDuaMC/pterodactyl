@@ -16,6 +16,7 @@ Route::group(['prefix' => '/servers/{uuid}'], function () {
     Route::post('/install', [Remote\Servers\ServerInstallController::class, 'store']);
     Route::post('/transfer/failure', [Remote\Servers\ServerTransferController::class, 'failure']);
     Route::post('/transfer/success', [Remote\Servers\ServerTransferController::class, 'success']);
+    Route::post('/container/status', [Remote\Servers\ServerStateChangeController::class, 'store']);
 });
 
 Route::group(['prefix' => '/backups'], function () {
