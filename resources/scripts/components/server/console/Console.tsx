@@ -43,6 +43,7 @@ export default memo(() => {
     const termRef = useRef<Terminal | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
     const [isAtBottom, setAtBottom] = useState(true);
+    const [isTerminalReady, setTerminalReady] = useState(false);
     const { connected, instance } = ServerContext.useStoreState(
         (state) => state.socket
     );
@@ -65,7 +66,7 @@ export default memo(() => {
         const text =
             (prelude ? TERMINAL_PRELUDE : "") +
             line.replace(/(?:\r\n|\r|\n)$/im, "") +
-            "\u001b[0m";
+            "\u001b[0m\u001b[K";
         termRef.current?.writeln(text);
     };
 
@@ -155,6 +156,7 @@ export default memo(() => {
 
             termRef.current = term;
             fitAddonRef.current = fitAddon;
+            setTerminalReady(true);
         });
 
         return () => {
@@ -164,9 +166,10 @@ export default memo(() => {
 
     useEffect(() => {
         if (!connected || !instance) return;
+        if (!isTerminalReady) return;
 
         if (!isTransferring) {
-            write("\x1b[2J\x1b[H");
+            termRef.current?.reset();
         }
 
         const listeners: Record<string, (s: string) => void> = {
@@ -191,7 +194,7 @@ export default memo(() => {
                 instance.removeListener(key, listeners[key]);
             });
         };
-    }, [connected, instance]);
+    }, [connected, instance, isTerminalReady]);
 
     const scrollToBottom = () => {
         termRef.current?.scrollToBottom();
