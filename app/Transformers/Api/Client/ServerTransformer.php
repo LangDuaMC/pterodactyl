@@ -62,7 +62,7 @@ class ServerTransformer extends BaseClientTransformer
                 'ip' => $server->node->daemon_sftp_alias ?: $server->node->fqdn,
                 'port' => $server->node->daemonSFTP,
             ],
-            'connection' => $server->relationLoaded('egg') && !is_null($server->egg->default_port)
+            'connection' => is_null($server->allocation) && $server->relationLoaded('egg') && !is_null($server->egg->default_port)
                 ? "{$server->shortUuid}.lo:{$server->egg->default_port}"
                 : null,
             'aliases' => [
@@ -113,6 +113,10 @@ class ServerTransformer extends BaseClientTransformer
         // This allows us to avoid too much permission regression, without also hiding information that
         // is generally needed for the frontend to make sense when browsing or searching results.
         if (!$user->can(Permission::ACTION_ALLOCATION_READ, $server)) {
+            if (is_null($server->allocation)) {
+                return $this->collection([], $transformer, Allocation::RESOURCE_NAME);
+            }
+
             $primary = clone $server->allocation;
             $primary->notes = null;
 

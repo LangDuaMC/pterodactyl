@@ -51,9 +51,8 @@ class EnvironmentService
             );
         }
 
-        // If the egg has a default_port set, expose it so the container knows
-        // which port to listen on without requiring a host port binding.
-        if (!is_null($server->egg->default_port)) {
+        // Only use the egg default when there is no main allocation to provide a port.
+        if (is_null($server->allocation) && !is_null($server->egg->default_port)) {
             $variables->put('SERVER_PORT', $server->egg->default_port);
         }
 

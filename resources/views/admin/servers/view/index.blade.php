@@ -108,7 +108,9 @@
                                 <td>Default Connection</td>
                                 <td>
                                     @if($server->allocation)
-                                        <code>{{ $server->egg->default_port ? $server->uuidShort . ':' . $server->egg->default_port : $server->allocation->ip . ':' . $server->allocation->port }}</code>
+                                        <code>{{ $server->allocation->ip . ':' . $server->allocation->port }}</code>
+                                    @elseif($server->egg->default_port)
+                                        <code>{{ $server->uuidShort . ':' . $server->egg->default_port }}</code>
                                     @else
                                         <span class="label label-default">No Default Port</span>
                                     @endif

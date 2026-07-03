@@ -60,7 +60,9 @@
                                 <td><a href="{{ route('admin.nodes.view', $server->node->id) }}">{{ $server->node->name }}</a></td>
                                 <td>
                                     @if($server->allocation)
-                                        <code>{{ $server->egg->default_port ? $server->uuidShort . ':' . $server->egg->default_port : $server->allocation->alias . ':' . $server->allocation->port }}</code>
+                                        <code>{{ $server->allocation->alias . ':' . $server->allocation->port }}</code>
+                                    @elseif($server->egg->default_port)
+                                        <code>{{ $server->uuidShort . ':' . $server->egg->default_port }}</code>
                                     @else
                                         <span class="label label-default">No Default Port</span>
                                     @endif

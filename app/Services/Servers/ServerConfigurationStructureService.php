@@ -106,10 +106,10 @@ class ServerConfigurationStructureService
             'uuid' => $server->uuid,
             'build' => [
                 'default' => [
-                    'ip' => $server->egg->default_port ?? ($server->allocation->ip ?? $server->shortUuid.'.lo'),
-                    'port' => $server->egg->default_port ?? ($server->allocation->port ?? 0),
+                    'ip' => $server->allocation->ip ?? $server->shortUuid.'.lo',
+                    'port' => $server->allocation->port ?? $server->egg->default_port ?? 0,
                 ],
-                'ports' => !is_null($server->egg->default_port) ? [] : $server->allocations->groupBy('ip')->map(function ($item) {
+                'ports' => is_null($server->allocation) && !is_null($server->egg->default_port) ? [] : $server->allocations->groupBy('ip')->map(function ($item) {
                     return $item->pluck('port');
                 })->toArray(),
                 'env' => $this->environment->handle($server),
