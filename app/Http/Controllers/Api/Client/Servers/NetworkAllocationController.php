@@ -2,6 +2,7 @@
 
 namespace Pterodactyl\Http\Controllers\Api\Client\Servers;
 
+use Illuminate\Support\Facades\Log;
 use Pterodactyl\Models\Server;
 use Illuminate\Http\JsonResponse;
 use Pterodactyl\Facades\Activity;
@@ -9,8 +10,10 @@ use Pterodactyl\Models\Allocation;
 use Illuminate\Database\ConnectionInterface;
 use Pterodactyl\Exceptions\DisplayException;
 use Pterodactyl\Repositories\Eloquent\ServerRepository;
+use Pterodactyl\Repositories\Wings\DaemonServerRepository;
 use Pterodactyl\Transformers\Api\Client\AllocationTransformer;
 use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
+use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
 use Pterodactyl\Services\Allocations\FindAssignableAllocationService;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Network\GetNetworkRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Network\NewAllocationRequest;
@@ -27,6 +30,7 @@ class NetworkAllocationController extends ClientApiController
         protected readonly ConnectionInterface $connection,
         private FindAssignableAllocationService $assignableAllocationService,
         private ServerRepository $serverRepository,
+        private DaemonServerRepository $daemonServerRepository,
     ) {
         parent::__construct();
     }
@@ -81,6 +85,12 @@ class NetworkAllocationController extends ClientApiController
             ->property('allocation', $allocation->toString())
             ->log();
 
+        try {
+            $this->daemonServerRepository->setServer($server)->sync();
+        } catch (DaemonConnectionException $exception) {
+            Log::warning($exception, ['server_id' => $server->id]);
+        }
+
         return $this->fractal->item($allocation)
             ->transformWith($this->getTransformer(AllocationTransformer::class))
             ->toArray();
@@ -105,6 +115,12 @@ class NetworkAllocationController extends ClientApiController
 
             return $allocation;
         });
+
+        try {
+            $this->daemonServerRepository->setServer($server)->sync();
+        } catch (DaemonConnectionException $exception) {
+            Log::warning($exception, ['server_id' => $server->id]);
+        }
 
         return $this->fractal->item($allocation)
             ->transformWith($this->getTransformer(AllocationTransformer::class))
@@ -137,6 +153,12 @@ class NetworkAllocationController extends ClientApiController
             ->subject($allocation)
             ->property('allocation', $allocation->toString())
             ->log();
+
+        try {
+            $this->daemonServerRepository->setServer($server)->sync();
+        } catch (DaemonConnectionException $exception) {
+            Log::warning($exception, ['server_id' => $server->id]);
+        }
 
         return new JsonResponse([], JsonResponse::HTTP_NO_CONTENT);
     }
