@@ -78,7 +78,7 @@ class ServerConfigurationStructureService
                     'ip' => $server->allocation->ip ?? $server->shortUuid.'.lo',
                     'port' => $server->allocation->port ?? $server->egg->default_port ?? 0,
                 ],
-                'mappings' => is_null($server->allocation) ? (object) [] : ($server->getAllocationMappings() ?: (object) []),
+                'mappings' => $server->getAllocationMappings() ?: (object) [],
             ],
             'mounts' => $server->mounts->map(function (Mount $mount) {
                 return [
